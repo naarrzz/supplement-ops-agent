@@ -10,5 +10,8 @@
     "build": "node lib/build-generated.mjs",
     "scan": "node lib/secret-scan.mjs"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@duckdb/node-api": "^2.0.0-r.1"
+  }
 }
