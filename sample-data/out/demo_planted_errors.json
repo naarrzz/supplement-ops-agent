@@ -1,0 +1,655 @@
+{
+  "label": "DEMO DATA. Fictional brand \"Kalye Nutrition\", synthetic numbers, not real sales.",
+  "planted": [
+    {
+      "batch": 1,
+      "file": "demo_orders_batch_01.csv",
+      "line": 120,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 26
+    },
+    {
+      "batch": 1,
+      "file": "demo_orders_batch_01.csv",
+      "line": 18,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 1,
+      "file": "demo_orders_batch_01.csv",
+      "line": 45,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 1,
+      "file": "demo_orders_batch_01.csv",
+      "line": 133,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 1,
+      "file": "demo_orders_batch_01.csv",
+      "line": 65,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 3490
+    },
+    {
+      "batch": 1,
+      "file": "demo_orders_batch_01.csv",
+      "line": 82,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 2,
+      "file": "demo_orders_batch_02.csv",
+      "line": 159,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 43
+    },
+    {
+      "batch": 2,
+      "file": "demo_orders_batch_02.csv",
+      "line": 90,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 2,
+      "file": "demo_orders_batch_02.csv",
+      "line": 44,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 2,
+      "file": "demo_orders_batch_02.csv",
+      "line": 49,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 2,
+      "file": "demo_orders_batch_02.csv",
+      "line": 115,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 1390
+    },
+    {
+      "batch": 2,
+      "file": "demo_orders_batch_02.csv",
+      "line": 50,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 3,
+      "file": "demo_orders_batch_03.csv",
+      "line": 83,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 24
+    },
+    {
+      "batch": 3,
+      "file": "demo_orders_batch_03.csv",
+      "line": 8,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 3,
+      "file": "demo_orders_batch_03.csv",
+      "line": 104,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 3,
+      "file": "demo_orders_batch_03.csv",
+      "line": 25,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 3,
+      "file": "demo_orders_batch_03.csv",
+      "line": 115,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 790
+    },
+    {
+      "batch": 3,
+      "file": "demo_orders_batch_03.csv",
+      "line": 132,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 4,
+      "file": "demo_orders_batch_04.csv",
+      "line": 107,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 82
+    },
+    {
+      "batch": 4,
+      "file": "demo_orders_batch_04.csv",
+      "line": 94,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 4,
+      "file": "demo_orders_batch_04.csv",
+      "line": 42,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 4,
+      "file": "demo_orders_batch_04.csv",
+      "line": 92,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 4,
+      "file": "demo_orders_batch_04.csv",
+      "line": 124,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 1390
+    },
+    {
+      "batch": 4,
+      "file": "demo_orders_batch_04.csv",
+      "line": 87,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 5,
+      "file": "demo_orders_batch_05.csv",
+      "line": 165,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 16
+    },
+    {
+      "batch": 5,
+      "file": "demo_orders_batch_05.csv",
+      "line": 131,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 5,
+      "file": "demo_orders_batch_05.csv",
+      "line": 58,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 5,
+      "file": "demo_orders_batch_05.csv",
+      "line": 29,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 5,
+      "file": "demo_orders_batch_05.csv",
+      "line": 34,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 1390
+    },
+    {
+      "batch": 5,
+      "file": "demo_orders_batch_05.csv",
+      "line": 166,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 6,
+      "file": "demo_orders_batch_06.csv",
+      "line": 91,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 35
+    },
+    {
+      "batch": 6,
+      "file": "demo_orders_batch_06.csv",
+      "line": 15,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 6,
+      "file": "demo_orders_batch_06.csv",
+      "line": 150,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 6,
+      "file": "demo_orders_batch_06.csv",
+      "line": 136,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 6,
+      "file": "demo_orders_batch_06.csv",
+      "line": 138,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 711
+    },
+    {
+      "batch": 6,
+      "file": "demo_orders_batch_06.csv",
+      "line": 171,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 7,
+      "file": "demo_orders_batch_07.csv",
+      "line": 121,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 81
+    },
+    {
+      "batch": 7,
+      "file": "demo_orders_batch_07.csv",
+      "line": 223,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 7,
+      "file": "demo_orders_batch_07.csv",
+      "line": 47,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 7,
+      "file": "demo_orders_batch_07.csv",
+      "line": 49,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 7,
+      "file": "demo_orders_batch_07.csv",
+      "line": 209,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 3490
+    },
+    {
+      "batch": 7,
+      "file": "demo_orders_batch_07.csv",
+      "line": 72,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 8,
+      "file": "demo_orders_batch_08.csv",
+      "line": 119,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 39
+    },
+    {
+      "batch": 8,
+      "file": "demo_orders_batch_08.csv",
+      "line": 75,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 8,
+      "file": "demo_orders_batch_08.csv",
+      "line": 47,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 8,
+      "file": "demo_orders_batch_08.csv",
+      "line": 20,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 8,
+      "file": "demo_orders_batch_08.csv",
+      "line": 142,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 1390
+    },
+    {
+      "batch": 8,
+      "file": "demo_orders_batch_08.csv",
+      "line": 108,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 9,
+      "file": "demo_orders_batch_09.csv",
+      "line": 67,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 42
+    },
+    {
+      "batch": 9,
+      "file": "demo_orders_batch_09.csv",
+      "line": 61,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 9,
+      "file": "demo_orders_batch_09.csv",
+      "line": 78,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 9,
+      "file": "demo_orders_batch_09.csv",
+      "line": 135,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 9,
+      "file": "demo_orders_batch_09.csv",
+      "line": 79,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 1290
+    },
+    {
+      "batch": 9,
+      "file": "demo_orders_batch_09.csv",
+      "line": 141,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 10,
+      "file": "demo_orders_batch_10.csv",
+      "line": 41,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 2
+    },
+    {
+      "batch": 10,
+      "file": "demo_orders_batch_10.csv",
+      "line": 63,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 10,
+      "file": "demo_orders_batch_10.csv",
+      "line": 95,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 10,
+      "file": "demo_orders_batch_10.csv",
+      "line": 125,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 10,
+      "file": "demo_orders_batch_10.csv",
+      "line": 149,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 590
+    },
+    {
+      "batch": 10,
+      "file": "demo_orders_batch_10.csv",
+      "line": 68,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 11,
+      "file": "demo_orders_batch_11.csv",
+      "line": 156,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 35
+    },
+    {
+      "batch": 11,
+      "file": "demo_orders_batch_11.csv",
+      "line": 94,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 11,
+      "file": "demo_orders_batch_11.csv",
+      "line": 124,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 11,
+      "file": "demo_orders_batch_11.csv",
+      "line": 165,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 11,
+      "file": "demo_orders_batch_11.csv",
+      "line": 83,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 490
+    },
+    {
+      "batch": 11,
+      "file": "demo_orders_batch_11.csv",
+      "line": 192,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 12,
+      "file": "demo_orders_batch_12.csv",
+      "line": 80,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 51
+    },
+    {
+      "batch": 12,
+      "file": "demo_orders_batch_12.csv",
+      "line": 138,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 12,
+      "file": "demo_orders_batch_12.csv",
+      "line": 88,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 12,
+      "file": "demo_orders_batch_12.csv",
+      "line": 110,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 12,
+      "file": "demo_orders_batch_12.csv",
+      "line": 68,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 3490
+    },
+    {
+      "batch": 12,
+      "file": "demo_orders_batch_12.csv",
+      "line": 111,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    },
+    {
+      "batch": 13,
+      "file": "demo_orders_batch_13.csv",
+      "line": 60,
+      "type": "duplicate_order_id",
+      "expected": "rejected",
+      "reason": "DUPLICATE_ORDER_ID",
+      "source_line": 20
+    },
+    {
+      "batch": 13,
+      "file": "demo_orders_batch_13.csv",
+      "line": 36,
+      "type": "unknown_sku",
+      "expected": "rejected",
+      "reason": "UNKNOWN_SKU"
+    },
+    {
+      "batch": 13,
+      "file": "demo_orders_batch_13.csv",
+      "line": 32,
+      "type": "negative_quantity",
+      "expected": "rejected",
+      "reason": "BAD_QUANTITY"
+    },
+    {
+      "batch": 13,
+      "file": "demo_orders_batch_13.csv",
+      "line": 93,
+      "type": "bad_date",
+      "expected": "rejected",
+      "reason": "BAD_DATE"
+    },
+    {
+      "batch": 13,
+      "file": "demo_orders_batch_13.csv",
+      "line": 103,
+      "type": "price_as_text",
+      "expected": "kept_normalized",
+      "reason": "PRICE_NORMALIZED",
+      "expected_unit_price": 490
+    },
+    {
+      "batch": 13,
+      "file": "demo_orders_batch_13.csv",
+      "line": 85,
+      "type": "missing_channel",
+      "expected": "rejected",
+      "reason": "MISSING_CHANNEL"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "supplement-ops-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Demo data only. Fictional brand Kalye Nutrition. AI ops agent portfolio project.",
+  "type": "module",
+  "scripts": {
+    "generate": "node sample-data/generate.mjs",
+    "test": "node --test \"tests/*.test.mjs\""
+  },
+  "license": "MIT"
+}

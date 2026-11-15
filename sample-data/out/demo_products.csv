@@ -1,0 +1,26 @@
+sku,name,category,price,unit_cost,reorder_point,lead_time_days
+KN-WHY-ISO-CHO-2LB,Whey Isolate Chocolate 2lb,whey,3490,1466,60,21
+KN-WHY-ISO-VAN-2LB,Whey Isolate Vanilla 2lb,whey,3490,1466,50,21
+KN-WHY-CON-CHO-5LB,Whey Concentrate Chocolate 5lb,whey,3290,1382,40,28
+KN-WHY-CON-CKE-2LB,Whey Concentrate Cookies 2lb,whey,2190,920,45,28
+KN-WHY-ISO-BNA-1LB,Whey Isolate Banana 1lb,whey,1890,794,35,21
+KN-CRE-MON-300,Creatine Monohydrate 300g,creatine,990,416,80,14
+KN-CRE-MON-500,Creatine Monohydrate 500g,creatine,1390,584,60,14
+KN-CRE-HCL-120,Creatine HCl 120 capsules,creatine,1290,542,30,21
+KN-CRE-MAL-250,Creatine Malate 250g,creatine,1190,500,25,21
+KN-PRE-BLZ-30,Pre-Workout Blaze 30 servings,preworkout,1290,542,50,14
+KN-PRE-BLZ-60,Pre-Workout Blaze 60 servings,preworkout,2190,920,30,14
+KN-PRE-CLM-30,Pre-Workout Calm 30 servings,preworkout,1290,542,30,21
+KN-PRE-ZRO-30,Pre-Workout Zero Stim 30 servings,preworkout,1390,584,25,21
+KN-VIT-D3-60,Vitamin D3 60 softgels,vitamins,490,206,70,28
+KN-VIT-C1K-90,Vitamin C 1000mg 90 tablets,vitamins,590,248,60,28
+KN-VIT-MLT-60,Multivitamin Daily 60 tablets,vitamins,690,290,50,28
+KN-VIT-ZNC-60,Zinc 25mg 60 tablets,vitamins,390,164,40,28
+KN-VIT-OMG-60,Omega-3 Fish Oil 60 softgels,vitamins,890,374,50,35
+KN-VIT-MG-90,Magnesium Glycinate 90 capsules,vitamins,790,332,40,35
+KN-EL-LMN-20,Electrolyte Lemon 20 sachets,electrolytes,790,332,90,14
+KN-EL-ORG-20,Electrolyte Orange 20 sachets,electrolytes,790,332,70,14
+KN-EL-MNG-20,Electrolyte Mango 20 sachets,electrolytes,790,332,60,14
+KN-EL-CCN-20,Electrolyte Coconut 20 sachets,electrolytes,890,374,40,21
+KN-EL-SACH-OLD,Electrolyte Berry (old formula) 20 sachets,electrolytes,690,290,40,21
+KN-EL-TBL-30,Electrolyte Tablets 30s,electrolytes,790,332,35,21
