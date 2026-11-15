@@ -1,6 +1,11 @@
 # Looker Studio dashboard (demo data)
 
-Data sources (Google Sheets connector, same spreadsheet): **Orders**, **SKU cover**, **Rejected rows**, **Run log**. In Orders, set `order_date` to type Date (YYYYMMDD) and `revenue`, `cost` to Currency (PHP).
+Data sources, either option:
+
+- **BigQuery (recommended):** views `ops_demo.v_sales_daily`, `v_sku_cover`, `v_weekly_kpis`, `v_margin_by_category`, `v_data_quality`. Margin and week-over-week change are already computed in SQL.
+- **Google Sheets:** tabs **Orders**, **SKU cover**, **Rejected rows**, **Run log** (works without BigQuery).
+
+The tables below name the Sheet tabs; with BigQuery use the matching view (Orders → v_sales_daily, SKU cover → v_sku_cover, Rejected rows → v_data_quality) and add a fourth page from v_weekly_kpis (revenue by week, revenue_wow_pct as a scorecard). In Orders, set `order_date` to type Date (YYYYMMDD) and `revenue`, `cost` to Currency (PHP).
 
 Calculated field on Orders: `Gross margin % = (SUM(revenue) - SUM(cost)) / SUM(revenue)`.
 

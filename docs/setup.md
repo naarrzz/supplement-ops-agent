@@ -28,6 +28,16 @@ Demo data only. Everything here is free: no billing account is needed. Steps mar
 2. Menu **Process Ops Inbox now** (or let n8n do it). Expected: 65 rejected rows (5 per batch), 13 prices fixed, every row in Run log `ok`.
 3. Menu **Explain rejected rows (steward)**: explanations appear next to the rejected rows.
 
+## 2b. BigQuery (free Sandbox, optional but recommended)
+
+1. **(you)** Open console.cloud.google.com/bigquery with the same Google account and pick the "Ops Agent Demo" project. If asked, accept the BigQuery Sandbox (no card needed). Copy the **project ID** (not the name).
+2. **(you)** Make sure the BigQuery API is enabled for that project (APIs & Services → Library → BigQuery API).
+3. **(you)** Add Script Property `BQ_PROJECT_ID` = that project ID.
+4. Menu **Export to BigQuery**. It creates dataset `ops_demo`, loads Products, Orders, Inventory and Rejected rows, and creates the views. Accept the new BigQuery permission screen the first time.
+5. Check in the BigQuery console: `SELECT * FROM ops_demo.v_sku_cover ORDER BY days_of_cover` and the queries in `sql/analysis/`.
+
+Sandbox limit: tables expire after 60 days. Running the export again reloads everything.
+
 ## 3. Web App (tools API)
 
 1. **(you)** Deploy → New deployment → Web app. Execute as: Me. Who has access: Anyone. (The token protects it; nobody can read data without it.)

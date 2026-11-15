@@ -22,6 +22,10 @@ Demo data only (fictional brand "Kalye Nutrition").
 3. **Approvals** (`save_suggestions`): code saves each suggestion as a `Pending` row (with flags in the reason). A person sets Approved or Rejected in the sheet; `onEdit` stamps who and when.
 4. **Report writer** (`write_report`): calls `get_week_summary`, reads the analyst output, saved approvals and the latest steward run, and returns the report as JSON. Apps Script renders it into a Google Doc and emails the owner.
 
+## 2b. BigQuery copy
+
+`exportToBigQuery` (menu, Web App action `export_bigquery`, and the start of every weekly run) loads the Products, Orders, Inventory and Rejected rows tabs into dataset `ops_demo` with explicit schemas (`WRITE_TRUNCATE`), then recreates the views from `sql/01_views.sql`. Looker Studio reads the views. The Sheet stays the place people look at and edit; BigQuery is the copy for SQL.
+
 ## 3. Ask ops (MCP)
 
 `mcp-server/server.ts` exposes the same eight tools to any MCP client. Backend `local` runs the demo CSVs through the same validator in memory; backend `webapp` forwards each call to the Web App with the token. Every tool is marked read-only except `save_approval`, which can only create a Pending suggestion.
