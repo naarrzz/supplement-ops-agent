@@ -103,20 +103,24 @@ function num_(v) {
   return typeof v === 'number' ? v : Number(v);
 }
 
+function loadProducts_() {
+  return readObjects_('products').map(function (p) {
+    return {
+      sku: String(p.sku),
+      name: p.name,
+      category: p.category,
+      price: num_(p.price),
+      unit_cost: num_(p.unit_cost),
+      reorder_point: num_(p.reorder_point),
+      lead_time_days: num_(p.lead_time_days),
+    };
+  });
+}
+
 /** Everything the tools need, as plain objects (same shape as lib/local-store.mjs). */
 function loadData_() {
   return {
-    products: readObjects_('products').map(function (p) {
-      return {
-        sku: String(p.sku),
-        name: p.name,
-        category: p.category,
-        price: num_(p.price),
-        unit_cost: num_(p.unit_cost),
-        reorder_point: num_(p.reorder_point),
-        lead_time_days: num_(p.lead_time_days),
-      };
-    }),
+    products: loadProducts_(),
     orders: readObjects_('orders').map(function (o) {
       o.order_id = String(o.order_id);
       o.quantity = num_(o.quantity);

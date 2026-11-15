@@ -53,12 +53,44 @@ function inboxFolder_() {
   return DriveApp.getFolderById(id);
 }
 
+function isProductHeader_(header) {
+  return header.indexOf('lead_time_days') !== -1 && header.indexOf('reorder_point') !== -1;
+}
+
+function csvHeader_(file) {
+  var firstLine = file.getBlob().getDataAsString('UTF-8').split(/\r?\n/)[0] || '';
+  return (Utilities.parseCsv(firstLine)[0] || []).map(function (h) {
+    return String(h).trim().toLowerCase();
+  });
+}
+
+/** Processes every CSV in Ops Inbox: the product list first, then the rest by file name. */
 function processInbox() {
-  var files = inboxFolder_().getFiles();
-  var out = [];
-  while (files.hasNext()) {
-    var f = files.next();
-    if (/\.csv$/i.test(f.getName())) out.push(processFile_(f));
+  var it = inboxFolder_().getFiles();
+  var files = [];
+  while (it.hasNext()) {
+    var f = it.next();
+    if (/\.csv$/i.test(f.getName())) files.push({ file: f, products: isProductHeader_(csvHeader_(f)) });
+  }
+  files.sort(function (a, b) {
+    if (a.products !== b.products) return a.products ? -1 : 1;
+    return a.file.getName() < b.file.getName() ? -1 : 1;
+  });
+  var out = files.map(function (x) {
+    return processFile_(x.file, { skipRefresh: true });
+  });
+  refreshCover_();
+  var done = out.filter(function (r) {
+    return r.log;
+  });
+  var rejected = done.reduce(function (n, r) {
+    return n + (r.log.rows_rejected || 0);
+  }, 0);
+  var msg = 'Processed ' + done.length + ' file(s), ' + rejected + ' row(s) rejected, ' + (out.length - done.length) + ' skipped. Demo data.';
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast(msg, 'Ops Inbox', 10);
+  } catch (e) {
+    Logger.log(msg);
   }
   return out;
 }
@@ -74,7 +106,8 @@ function processFileById_(fileId) {
   return processFile_(file);
 }
 
-function processFile_(file) {
+function processFile_(file, opts) {
+  opts = opts || {};
   var name = file.getName();
   var done = readObjects_('runLog').some(function (r) {
     return r.file === name && r.step === 'validate' && r.status === 'ok';
@@ -87,7 +120,7 @@ function processFile_(file) {
   });
 
   // The product list is a master file: it replaces the Products tab.
-  if (header.indexOf('lead_time_days') !== -1 && header.indexOf('reorder_point') !== -1) {
+  if (isProductHeader_(header)) {
     var products = table.slice(1).map(function (r) {
       var o = {};
       header.forEach(function (h, i) {
@@ -96,27 +129,33 @@ function processFile_(file) {
       return o;
     });
     replaceObjects_('products', products);
-    refreshCover_();
+    if (!opts.skipRefresh) refreshCover_();
     var plog = { run_id: 'run-' + Date.now(), step: 'validate', file: name, kind: 'products', rows_in: products.length, rows_kept: products.length, rows_fixed: 0, rows_rejected: 0, started_at: new Date().toISOString(), finished_at: new Date().toISOString(), status: 'ok' };
     appendObjects_('runLog', [plog]);
     return { file: name, kind: 'products', log: plog };
   }
 
   var kind = OpsCore.detectKind(table[0]);
+  var products = loadProducts_();
+  // Without a product list every SKU would be "unknown". Don't reject anything yet and don't
+  // mark the file as processed, so it is picked up again once the product list is loaded.
+  if (kind && !products.length) {
+    return { file: name, skipped: true, error: 'Load the product list (demo_products.csv) first.' };
+  }
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
     var r = OpsCore.validateBatch({
       fileName: name,
       table: table,
-      products: loadData_().products,
+      products: products,
       existingKeys: existingKeys_(kind),
     });
     if (r.kind === 'orders') appendObjects_('orders', r.clean);
     if (r.kind === 'inventory') appendObjects_('inventory', r.clean);
     appendObjects_('rejected', r.rejected);
     appendObjects_('runLog', [r.log]);
-    refreshCover_();
+    if (!opts.skipRefresh) refreshCover_();
     return { file: name, kind: r.kind, log: r.log };
   } finally {
     lock.releaseLock();

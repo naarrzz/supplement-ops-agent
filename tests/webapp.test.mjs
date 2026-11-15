@@ -67,3 +67,36 @@ test('Web App does not crash on bad JSON', () => {
   const r = JSON.parse(ctx.doPost({ postData: { contents: '{not json' }, parameter: {} }).text);
   assert.match(r.error, /JSON/);
 });
+
+test('processInbox loads the product list first and holds orders until products exist', () => {
+  const ctx = makeAppsScript({ OPS_TOKEN: TOKEN, OPS_INBOX_FOLDER_ID: 'inbox' });
+  const file = (name, text) => ({ getName: () => name, getBlob: () => ({ getDataAsString: () => text }) });
+  const files = [
+    file('demo_orders_batch_01.csv', 'order_id,order_date,channel,sku,quantity,unit_price\nA1,2026-11-01,website,KN-1,1,100\n'),
+    file('demo_products.csv', 'sku,name,category,price,unit_cost,reorder_point,lead_time_days\nKN-1,Test,whey,100,40,5,14\n'),
+  ];
+  let products = [];
+  const calls = [];
+  ctx.Utilities = { parseCsv: (t) => t.trim().split('\n').map((l) => l.split(',')) };
+  ctx.inboxFolder_ = () => {
+    let i = 0;
+    return { getId: () => 'inbox', getFiles: () => ({ hasNext: () => i < files.length, next: () => files[i++] }) };
+  };
+  ctx.readObjects_ = () => [];
+  ctx.loadProducts_ = () => products;
+  ctx.replaceObjects_ = (k, rows) => { calls.push('replace:' + k); if (k === 'products') products = rows.map((r) => ({ ...r, unit_cost: Number(r.unit_cost) })); };
+  ctx.appendObjects_ = (k, rows) => calls.push('append:' + k + ':' + rows.length);
+  ctx.existingKeys_ = () => ({});
+  ctx.refreshCover_ = () => calls.push('refresh');
+  ctx.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
+  ctx.SpreadsheetApp = { getActiveSpreadsheet: () => ({ toast() {} }) };
+  const out = JSON.parse(JSON.stringify(ctx.processInbox()));
+  assert.deepEqual(out.map((r) => r.file), ['demo_products.csv', 'demo_orders_batch_01.csv']);
+  assert.equal(out[1].log.rows_kept, 1);
+  assert.equal(calls.filter((c) => c === 'refresh').length, 1, 'cover refreshed once at the end');
+
+  products = [];
+  const held = JSON.parse(JSON.stringify(ctx.processFile_(files[0])));
+  assert.equal(held.skipped, true);
+  assert.match(held.error, /product list/);
+});
