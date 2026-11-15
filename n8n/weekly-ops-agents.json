@@ -1,0 +1,112 @@
+{
+  "name": "Weekly ops agents: analyst, approvals, report (demo data)",
+  "nodes": [
+    {
+      "id": "b1f0c6c2-0002-4a11-9a01-000000000001",
+      "name": "Every Monday 8 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "rule": { "interval": [{ "field": "weeks", "triggerAtDay": [1], "triggerAtHour": 8 }] }
+      }
+    },
+    {
+      "id": "b1f0c6c2-0002-4a11-9a01-000000000002",
+      "name": "Inventory analyst agent (Gemini)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "REPLACE_WITH_WEBAPP_URL",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'run_agent', agent: 'analyst' }) }}",
+        "options": { "timeout": 300000 }
+      }
+    },
+    {
+      "id": "b1f0c6c2-0002-4a11-9a01-000000000003",
+      "name": "Analyst output passed checks?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [520, 0],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "c0000000-0000-4000-8000-000000000002",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b1f0c6c2-0002-4a11-9a01-000000000004",
+      "name": "Save reorder suggestions as Pending",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, -100],
+      "parameters": {
+        "method": "POST",
+        "url": "REPLACE_WITH_WEBAPP_URL",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'save_suggestions', checked: $json.checked }) }}",
+        "options": { "timeout": 300000 }
+      }
+    },
+    {
+      "id": "b1f0c6c2-0002-4a11-9a01-000000000005",
+      "name": "Report writer agent (Gemini), Doc and email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, -100],
+      "parameters": {
+        "method": "POST",
+        "url": "REPLACE_WITH_WEBAPP_URL",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'write_report', analyst_output: $('Inventory analyst agent (Gemini)').item.json.output, saved: $json.results }) }}",
+        "options": { "timeout": 300000 }
+      }
+    },
+    {
+      "id": "b1f0c6c2-0002-4a11-9a01-000000000006",
+      "name": "Stop: analyst output failed checks",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [780, 100],
+      "parameters": {
+        "errorMessage": "={{ 'Analyst failed: ' + JSON.stringify($json.problems || $json.error) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Every Monday 8 AM": { "main": [[{ "node": "Inventory analyst agent (Gemini)", "type": "main", "index": 0 }]] },
+    "Inventory analyst agent (Gemini)": { "main": [[{ "node": "Analyst output passed checks?", "type": "main", "index": 0 }]] },
+    "Analyst output passed checks?": {
+      "main": [
+        [{ "node": "Save reorder suggestions as Pending", "type": "main", "index": 0 }],
+        [{ "node": "Stop: analyst output failed checks", "type": "main", "index": 0 }]
+      ]
+    },
+    "Save reorder suggestions as Pending": { "main": [[{ "node": "Report writer agent (Gemini), Doc and email", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Manila" },
+  "pinData": {},
+  "active": false
+}
