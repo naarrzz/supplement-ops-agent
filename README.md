@@ -14,8 +14,8 @@ A small brand selling on its website, Shopee, Lazada and two physical stores end
 
 | | Before (manual) | After (this project) |
 |---|---|---|
-| Clean and merge weekly CSVs | about 45 min, errors found late | automatic on upload; bad rows land in "Rejected rows" with a reason and a suggested fix |
-| Decide what to reorder | gut feel, about 30 min | ranked list with days of cover vs supplier lead time; suggestions wait in an Approvals sheet |
+| Clean and merge weekly CSVs | about 45 min, errors found late | automatic on upload, bad rows land in "Rejected rows" with a reason and a suggested fix |
+| Decide what to reorder | gut feel, about 30 min | ranked list with days of cover vs supplier lead time, suggestions wait in an Approvals sheet |
 | Weekly report | about 45 min | written and emailed automatically, about 5 min to read and approve |
 
 Time figures are estimates for a business of this size, not measured client results.
@@ -73,7 +73,7 @@ What the analysis queries find in the demo data:
 
 | Query | Result |
 |---|---|
-| [payday_effect.sql](sql/analysis/payday_effect.sql) | Paydays (15th, 30th) average 81.6% more revenue than other days; the day after is +39.3%. |
+| [payday_effect.sql](sql/analysis/payday_effect.sql) | Paydays (15th, 30th) average 81.6% more revenue than other days. The day after is +39.3%. |
 | [sku_trends.sql](sql/analysis/sku_trends.sql) | Least-squares slope of weekly units: Creatine Monohydrate 500g grows about 7.3% a week, the fastest in the catalog. |
 | [channel_mix.sql](sql/analysis/channel_mix.sql) | Revenue share per channel, first 4 weeks vs last 4 weeks. |
 | [reorder_shortlist.sql](sql/analysis/reorder_shortlist.sql) | The same 5 SKUs and order quantities as the analyst's `list_low_cover` tool. |
@@ -92,7 +92,7 @@ All three agents run the same loop (`OpsAgents.runAgent`): Gemini gets the syste
 
 Design rules:
 
-- **The model never does the math.** Days of cover, averages, margins and a baseline order quantity are computed in code; the agents read, compare and explain.
+- **The model never does the math.** Days of cover, averages, margins and a baseline order quantity are computed in code the agents read, compare and explain.
 - **Agents can't write.** The analyst only proposes. Code checks every suggestion against the tool numbers (unknown SKU, dead stock, not actually low, quantity outside 0.5x–2x of the baseline), saves it as `Pending` with any flags visible, and a person approves or rejects it in the sheet. Nothing is ever sent to a supplier.
 - **Every run is logged**: tools called with their arguments, model calls, token use, validation problems and an output preview go to the Run log sheet.
 
@@ -107,7 +107,7 @@ npm test                  # 60 tests: generator, validator, tools, agent loop, S
 cd mcp-server && npm install && npm test   # starts the MCP server and calls every tool with the official client
 ```
 
-**Ask ops from Claude Code:** open this folder in Claude Code; `.mcp.json` registers the server (local backend, demo data). Approve it, then ask, for example, *"What will run out in the next 2 weeks?"*. It calls `list_low_cover`, `get_sales` and `get_stock` and shows the numbers it used.
+**Ask ops from Claude Code:** open this folder in Claude Code `.mcp.json` registers the server (local backend, demo data). Approve it, then ask, for example, *"What will run out in the next 2 weeks?"*. It calls `list_low_cover`, `get_sales` and `get_stock` and shows the numbers it used.
 
 **Claude Desktop:** add to `claude_desktop_config.json`:
 
@@ -123,7 +123,7 @@ Sheets, Apps Script, Drive, BigQuery Sandbox, Looker Studio and the Gemini API f
 
 ## Security and access
 
-- **Secrets never in the repo.** The Gemini key and the Web App token live in Apps Script Script Properties; n8n holds the token in a Query Auth credential; the MCP server reads it from a gitignored `.env`. Exported n8n workflows contain placeholders and no credential IDs.
+- **Secrets never in the repo.** The Gemini key and the Web App token live in Apps Script Script Properties, n8n holds the token in a Query Auth credential. The MCP server reads it from a gitignored `.env`. Exported n8n workflows contain placeholders and no credential IDs.
 - **Pre-commit secret scan** (`npm run scan`, also a test) blocks API keys, OAuth tokens, private keys, real deployment URLs, n8n credential references, and a local list of words that must never be published.
 - **Web App** requires a token of 24+ characters (compared in constant time) and fails closed if none is set. It only accepts files that are inside the Ops Inbox folder.
 - **Least privilege:** OAuth scopes are limited to Sheets, BigQuery, Drive read-only, Docs, sending mail as the owner, external requests (Gemini) and triggers. Reports are emailed only to the script owner.
@@ -134,11 +134,11 @@ Sheets, Apps Script, Drive, BigQuery Sandbox, Looker Studio and the Gemini API f
 
 Tested locally (`npm test`, `mcp-server npm test`): data generator, validator with every planted error, all tools against hand counts, every SQL view and analysis query on DuckDB cross-checked against the tools, the BigQuery loader's schema against the SQL tables, the agent loop with a scripted fake model (tool routing, read-only enforcement, step limit, schema checks, guardrail flags), Web App token gate and routing with faked Google services, n8n JSON structure, secret scan, and the MCP server end to end over stdio.
 
-Not run yet: anything that needs Google or n8n: Sheets and Drive I/O, BigQuery load jobs and the views on BigQuery itself, real Gemini calls, Doc and email output, Looker Studio, and importing/running the n8n workflows. Those are checked by hand during setup; this section will be updated when they are.
+Not run yet: anything that needs Google or n8n: Sheets and Drive I/O, BigQuery load jobs and the views on BigQuery itself, real Gemini calls, Doc and email output, Looker Studio, and importing/running the n8n workflows. Those are checked by hand during setup, this section will be updated when they are.
 
 ## How I worked with AI
 
-I decided the workflow, the business rules (what counts as low stock, what an agent may and may not do, what needs human approval) and how it should fail; tested it; and shipped it. AI coding tools (Claude Code) wrote much of the code under that direction. The agents inside the product use Google's Gemini API.
+I decided the workflow, the business rules (what counts as low stock, what an agent may and may not do, what needs human approval) and how it should fail, tested it, and shipped it. AI coding tools (Claude Code) wrote much of the code under that direction. The agents inside the product use Google's Gemini API.
 
 ## Roadmap (v2)
 
