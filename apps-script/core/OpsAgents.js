@@ -243,6 +243,40 @@ var OpsAgents = (function () {
     });
   }
 
+  /**
+   * Choose a model from the names the API lists: prefer stable "gemini-<version>-flash"
+   * (no preview/exp/lite/tts/image/audio variants), newest version first; then any flash model;
+   * then any gemini model. Returns null if the list is empty.
+   */
+  function pickModel(names) {
+    var version = function (n) {
+      var m = String(n).match(/^gemini-(\d+(?:\.\d+)?)/);
+      return m ? parseFloat(m[1]) : -1;
+    };
+    var newest = function (list) {
+      return list.slice().sort(function (a, b) {
+        return version(b) - version(a) || (a < b ? -1 : 1);
+      })[0];
+    };
+    var odd = /preview|exp|lite|tts|image|audio|live|thinking|embedding|vision|-\d{3,}$/;
+    var stableFlash = names.filter(function (n) {
+      return /^gemini-\d+(\.\d+)?-flash$/.test(n);
+    });
+    if (stableFlash.length) return newest(stableFlash);
+    var anyFlash = names.filter(function (n) {
+      return /^gemini-.*flash/.test(n) && !odd.test(n);
+    });
+    if (anyFlash.length) return newest(anyFlash);
+    var anyGemini = names.filter(function (n) {
+      return /^gemini-/.test(n) && !/embedding|tts|image|audio/.test(n);
+    });
+    var stable = anyGemini.filter(function (n) {
+      return !odd.test(n);
+    });
+    if (stable.length) return newest(stable);
+    return anyGemini.length ? newest(anyGemini) : null;
+  }
+
   /** Writer JSON -> plain text, used for the email body and the Google Doc. */
   function renderReport(r) {
     var lines = [r.title, '', r.headline, ''];
@@ -271,6 +305,7 @@ var OpsAgents = (function () {
     checkSuggestions: checkSuggestions,
     saveSuggestions: saveSuggestions,
     renderReport: renderReport,
+    pickModel: pickModel,
   };
 })();
 

@@ -176,8 +176,9 @@ var OpsTools = (function () {
   function list_rejected(data, args) {
     var limit = Math.max(1, Math.min(200, parseInt((args && args.limit) || 20, 10)));
     var file = args && args.file;
+    var onlyNew = args && (args.only_unexplained === true || args.only_unexplained === 'true');
     var rows = data.rejected.filter(function (r) {
-      return !file || r.file === file;
+      return (!file || r.file === file) && (!onlyNew || !r.suggested_fix);
     });
     var byReason = {};
     rows.forEach(function (r) {

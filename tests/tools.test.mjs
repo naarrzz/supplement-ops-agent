@@ -118,3 +118,10 @@ test('coverTable gives one row per SKU with a status the dashboard can color', a
     assert.equal(flagged.has(r.sku), r.status !== 'OK', r.sku);
   }
 });
+
+test('list_rejected can return only rows the steward has not explained yet', () => {
+  const local = buildLocalStore({ now: NOW });
+  local.data.rejected.slice(0, 10).forEach((r) => (r.suggested_fix = 'Delete the row'));
+  assert.equal(local.run('list_rejected', { only_unexplained: true, limit: 100 }).total, 55);
+  assert.equal(local.run('list_rejected', { limit: 100 }).total, 65);
+});

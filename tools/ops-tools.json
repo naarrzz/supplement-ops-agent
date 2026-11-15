@@ -6,9 +6,14 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "sku": { "type": "string", "description": "Product SKU, for example KN-CRE-MON-500." }
+        "sku": {
+          "type": "string",
+          "description": "Product SKU, for example KN-CRE-MON-500."
+        }
       },
-      "required": ["sku"]
+      "required": [
+        "sku"
+      ]
     }
   },
   {
@@ -18,10 +23,20 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "sku": { "type": "string", "description": "Product SKU." },
-        "days": { "type": "integer", "description": "Window length in days, 1 to 90. Default 28.", "minimum": 1, "maximum": 90 }
+        "sku": {
+          "type": "string",
+          "description": "Product SKU."
+        },
+        "days": {
+          "type": "integer",
+          "description": "Window length in days, 1 to 90. Default 28.",
+          "minimum": 1,
+          "maximum": 90
+        }
       },
-      "required": ["sku"]
+      "required": [
+        "sku"
+      ]
     }
   },
   {
@@ -31,9 +46,14 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "sku": { "type": "string", "description": "Product SKU." }
+        "sku": {
+          "type": "string",
+          "description": "Product SKU."
+        }
       },
-      "required": ["sku"]
+      "required": [
+        "sku"
+      ]
     }
   },
   {
@@ -43,8 +63,18 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "days": { "type": "integer", "description": "Flag SKUs with less than this many days of cover. Default 21.", "minimum": 1, "maximum": 180 },
-        "lookback_days": { "type": "integer", "description": "Days of sales used for the average. Default 28.", "minimum": 7, "maximum": 90 }
+        "days": {
+          "type": "integer",
+          "description": "Flag SKUs with less than this many days of cover. Default 21.",
+          "minimum": 1,
+          "maximum": 180
+        },
+        "lookback_days": {
+          "type": "integer",
+          "description": "Days of sales used for the average. Default 28.",
+          "minimum": 7,
+          "maximum": 90
+        }
       }
     }
   },
@@ -55,7 +85,12 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "lookback_days": { "type": "integer", "description": "Days without sales to count as dead stock. Default 60.", "minimum": 14, "maximum": 90 }
+        "lookback_days": {
+          "type": "integer",
+          "description": "Days without sales to count as dead stock. Default 60.",
+          "minimum": 14,
+          "maximum": 90
+        }
       }
     }
   },
@@ -66,8 +101,20 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "limit": { "type": "integer", "description": "Most recent rows to return, 1 to 200. Default 20.", "minimum": 1, "maximum": 200 },
-        "file": { "type": "string", "description": "Only rows from this uploaded file name." }
+        "limit": {
+          "type": "integer",
+          "description": "Most recent rows to return, 1 to 200. Default 20.",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "file": {
+          "type": "string",
+          "description": "Only rows from this uploaded file name."
+        },
+        "only_unexplained": {
+          "type": "boolean",
+          "description": "Only rows the data steward has not explained yet. Default false."
+        }
       }
     }
   },
@@ -78,7 +125,10 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "end_date": { "type": "string", "description": "Last day of the week, YYYY-MM-DD. Default: latest data date." }
+        "end_date": {
+          "type": "string",
+          "description": "Last day of the week, YYYY-MM-DD. Default: latest data date."
+        }
       }
     }
   },
@@ -89,12 +139,32 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "sku": { "type": "string", "description": "Product SKU." },
-        "qty": { "type": "integer", "description": "Suggested order quantity in units.", "minimum": 1 },
-        "reason": { "type": "string", "description": "Why, using numbers from the tools." },
-        "confidence": { "type": "number", "description": "0 to 1.", "minimum": 0, "maximum": 1 }
+        "sku": {
+          "type": "string",
+          "description": "Product SKU."
+        },
+        "qty": {
+          "type": "integer",
+          "description": "Suggested order quantity in units.",
+          "minimum": 1
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why, using numbers from the tools."
+        },
+        "confidence": {
+          "type": "number",
+          "description": "0 to 1.",
+          "minimum": 0,
+          "maximum": 1
+        }
       },
-      "required": ["sku", "qty", "reason", "confidence"]
+      "required": [
+        "sku",
+        "qty",
+        "reason",
+        "confidence"
+      ]
     }
   }
 ]

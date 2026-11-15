@@ -139,3 +139,11 @@ test('tool loop stops at maxSteps even if the model keeps calling tools', () => 
   assert.equal(r.steps, 3);
   assert.equal(r.ok, true);
 });
+
+test('pickModel prefers the newest stable flash model and skips preview/lite variants', () => {
+  const pick = (names) => OpsAgents.pickModel(names);
+  assert.equal(pick(['gemini-2.5-pro', 'gemini-3.8-flash', 'gemini-3.8-flash-lite', 'gemini-4.0-flash-preview-05-20', 'gemini-3.5-flash', 'text-embedding-004']), 'gemini-3.8-flash');
+  assert.equal(pick(['gemini-4.0-flash-preview-05-20', 'gemini-2.5-pro']), 'gemini-2.5-pro');
+  assert.equal(pick(['gemini-flash-latest', 'gemini-2.5-pro']), 'gemini-flash-latest');
+  assert.equal(pick([]), null);
+});

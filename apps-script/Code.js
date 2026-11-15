@@ -16,9 +16,9 @@ function onOpen() {
     .createMenu('Ops (demo)')
     .addItem('1. Set up sheets', 'setup')
     .addItem('Process Ops Inbox now', 'processInbox')
-    .addItem('Explain rejected rows (steward)', 'runSteward')
-    .addItem('Run weekly agents now', 'runWeekly')
-    .addItem('Export to BigQuery', 'exportToBigQuery')
+    .addItem('Explain rejected rows (steward)', 'menuSteward')
+    .addItem('Run weekly agents now', 'menuWeekly')
+    .addItem('Export to BigQuery', 'menuBigQuery')
     .addSeparator()
     .addItem('Install fallback triggers', 'installTriggers')
     .addToUi();
@@ -204,8 +204,8 @@ function runAgent_(agent, input, data) {
 /** Steward: explains rejected rows and writes the explanation next to each row. */
 function runSteward(fileName) {
   var input = typeof fileName === 'string' && fileName
-    ? 'Explain the rejected rows from file ' + fileName + '. Call list_rejected with file set to that name.'
-    : 'Explain the most recent rejected rows.';
+    ? 'Explain the rejected rows from file ' + fileName + '. Call list_rejected with file set to that name and only_unexplained true.'
+    : 'Explain every rejected row that has no explanation yet. Call list_rejected with only_unexplained true and limit 100.';
   var res = runAgent_('steward', input);
   if (!res.ok) return res;
   var sh = sheet_('rejected');
@@ -273,7 +273,7 @@ function runWeekly() {
     }
   }
   var analyst = runAnalyst();
-  if (!analyst.ok) return { step: 'analyst', error: analyst.error || analyst.problems };
+  if (!analyst.ok) return { step: 'analyst', error: analyst.error || (analyst.problems || []).join('; ') };
   var saved = saveSuggestions_(analyst.checked);
   return writeReport_(analyst.output, saved);
 }
@@ -289,8 +289,50 @@ function writeReport_(analystOutput, saved) {
     '\nSaved to Approvals: ' + JSON.stringify(saved || []) +
     '\nLatest data steward run: ' + (stewardNote ? stewardNote.detail : 'none this week');
   var writer = runAgent_('writer', input);
-  if (!writer.ok) return { step: 'writer', error: writer.error || writer.problems };
+  if (!writer.ok) return { step: 'writer', error: writer.error || (writer.problems || []).join('; ') };
   return publishReport_(writer.output, analystOutput.as_of);
+}
+
+// ---------- Menu wrappers: run, then tell the person what happened ----------
+
+function alert_(title, msg) {
+  try {
+    SpreadsheetApp.getUi().alert(title, msg, SpreadsheetApp.getUi().ButtonSet.OK);
+  } catch (e) {
+    Logger.log(title + ': ' + msg);
+  }
+}
+
+function failText_(res) {
+  if (!res) return 'No result.';
+  if (res.error) return String(res.error).slice(0, 600);
+  if (res.problems && res.problems.length) return 'Output failed checks: ' + res.problems.slice(0, 5).join('; ');
+  return '';
+}
+
+function menuSteward() {
+  var res = runSteward();
+  var fail = failText_(res);
+  alert_('Data steward (demo data)', fail
+    ? 'Failed: ' + fail + '\n\nDetails are in the Run log tab.'
+    : 'Explained ' + res.output.items.length + ' rejected row(s). See the explanation columns in Rejected rows.\n\n' + res.output.summary +
+      '\n\nModel calls: ' + res.usage.model_calls + ', tokens: ' + res.usage.total_tokens);
+}
+
+function menuWeekly() {
+  var res = runWeekly();
+  alert_('Weekly agents (demo data)', res.doc_url
+    ? 'Done. Reorder suggestions are in Approvals (Pending), the report is in Reports and was emailed to ' + res.emailed_to + '.\n\n' + res.doc_url
+    : 'Stopped at the ' + (res.step || 'unknown') + ' step: ' + failText_(res) + '\n\nDetails are in the Run log tab.');
+}
+
+function menuBigQuery() {
+  try {
+    var r = exportToBigQuery();
+    alert_('BigQuery (demo data)', 'Loaded ' + r.loaded.map(function (x) { return x.table + ' (' + x.rows + ')'; }).join(', ') + ' into dataset ' + r.dataset + ' and created ' + r.views + ' views.');
+  } catch (e) {
+    alert_('BigQuery (demo data)', 'Failed: ' + String(e.message || e).slice(0, 600));
+  }
 }
 
 // ---------- Web App (tools API for n8n and the MCP server) ----------
