@@ -8,7 +8,7 @@
  *   - installTriggers: fallback time triggers for when n8n (on the Mac) is off
  *
  * Script Properties (Project Settings): OPS_TOKEN, GEMINI_API_KEY, OPS_INBOX_FOLDER_ID,
- * optional GEMINI_MODEL. SPREADSHEET_ID is set by setup().
+ * optional GEMINI_MODEL and BQ_PROJECT_ID (BigQuery export). SPREADSHEET_ID is set by setup().
  */
 
 function onOpen() {
@@ -18,6 +18,7 @@ function onOpen() {
     .addItem('Process Ops Inbox now', 'processInbox')
     .addItem('Explain rejected rows (steward)', 'runSteward')
     .addItem('Run weekly agents now', 'runWeekly')
+    .addItem('Export to BigQuery', 'exportToBigQuery')
     .addSeparator()
     .addItem('Install fallback triggers', 'installTriggers')
     .addToUi();
@@ -225,6 +226,13 @@ function publishReport_(report, period) {
 
 /** Weekly chain: analyst -> save approvals -> writer -> Doc + email. Used by the fallback trigger. */
 function runWeekly() {
+  if (props_().getProperty('BQ_PROJECT_ID')) {
+    try {
+      exportToBigQuery(); // keep the BigQuery copy and views fresh for the dashboard
+    } catch (e) {
+      appendObjects_('runLog', [{ run_id: 'bq-' + Date.now(), step: 'bigquery', status: 'error', detail: String(e.message || e) }]);
+    }
+  }
   var analyst = runAnalyst();
   if (!analyst.ok) return { step: 'analyst', error: analyst.error || analyst.problems };
   var saved = saveSuggestions_(analyst.checked);
@@ -309,6 +317,8 @@ function route_(body) {
       return writeReport_(body.analyst_output || {}, body.saved || []);
     case 'run_weekly':
       return runWeekly();
+    case 'export_bigquery':
+      return exportToBigQuery();
     default:
       return { error: 'Unknown action ' + body.action };
   }

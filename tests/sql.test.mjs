@@ -142,3 +142,17 @@ test('every .sql file is covered by a test above', () => {
   const self = readFileSync(fileURLToPath(import.meta.url), 'utf8');
   for (const f of files) assert.ok(self.includes(f), `${f} has no test`);
 });
+
+test('Apps Script BigQuery loader uses the same columns and types as sql/00_tables.sql', async () => {
+  const vm = await import('node:vm');
+  const ctx = vm.createContext({});
+  vm.runInContext(readFileSync(join(ROOT, 'apps-script', 'BigQueryLoad.js'), 'utf8'), ctx);
+  const loader = JSON.parse(JSON.stringify(vm.runInContext('BQ_TABLES', ctx)));
+  const ddl = read('00_tables.sql');
+  for (const [table, def] of Object.entries(loader)) {
+    const block = ddl.match(new RegExp(`CREATE TABLE IF NOT EXISTS ops_demo\\.${table} \\(([\\s\\S]*?)\\n\\);`))[1];
+    const cols = block.trim().split(',\n').map((l) => l.trim().split(/\s+/));
+    assert.deepEqual(def.fields.map((f) => [f[0], f[1], f[2] === 'REQUIRED']), cols.map((c) => [c[0], c[1], c.includes('NOT')]), table);
+  }
+  assert.ok(readFileSync(join(ROOT, 'apps-script', 'core', 'Generated.js'), 'utf8').includes('OPS_BQ_VIEWS_SQL'));
+});
