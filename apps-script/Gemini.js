@@ -35,6 +35,7 @@ function pickGeminiModel_(exclude) {
       return n !== exclude;
     });
   var pick = OpsAgents.pickModel(names);
+  console.log('Gemini models available: ' + names.length + ', picked: ' + pick);
   if (!pick) throw new Error('No Gemini model with generateContent is available to this key.');
   props_().setProperty('GEMINI_MODEL', pick);
   return pick;
@@ -49,6 +50,8 @@ function callGemini_(request) {
   var model = geminiModel_();
   var repicked = false;
   for (var attempt = 0; attempt < 5; attempt++) {
+    var t0 = Date.now();
+    console.log('Gemini call: model ' + model + ', attempt ' + (attempt + 1) + ', ' + JSON.stringify(request).length + ' chars');
     var res = UrlFetchApp.fetch(GEMINI_BASE + 'models/' + encodeURIComponent(model) + ':generateContent', {
       method: 'post',
       contentType: 'application/json',
@@ -57,6 +60,7 @@ function callGemini_(request) {
       muteHttpExceptions: true,
     });
     var code = res.getResponseCode();
+    console.log('Gemini HTTP ' + code + ' in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s');
     if (code === 200) return JSON.parse(res.getContentText());
     if (code === 404 && !repicked) {
       model = pickGeminiModel_(model); // model retired or not available to this key: choose again once
@@ -70,4 +74,17 @@ function callGemini_(request) {
     throw new Error('Gemini (' + model + ') HTTP ' + code + ': ' + res.getContentText().slice(0, 500));
   }
   throw new Error('Gemini (' + model + ') is still busy or rate-limited after 5 tries (free tier). Try again in a minute.');
+}
+
+/** Menu: one tiny Gemini call, to check the key, the model and the speed. */
+function menuTestGemini() {
+  var t0 = Date.now();
+  try {
+    var res = callGemini_({ contents: [{ role: 'user', parts: [{ text: 'Reply with the single word OK.' }] }] });
+    var text = OpsAgents.textOf(res);
+    alert_('Gemini test', 'Model: ' + props_().getProperty('GEMINI_MODEL') + '\nReply: ' + text.slice(0, 100) +
+      '\nTime: ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s');
+  } catch (e) {
+    alert_('Gemini test', 'Failed after ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s: ' + String(e.message || e).slice(0, 600));
+  }
 }

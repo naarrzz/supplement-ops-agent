@@ -314,6 +314,7 @@ var OpsAgents = (function () {
     saveSuggestions: saveSuggestions,
     renderReport: renderReport,
     pickModel: pickModel,
+    textOf: textOf,
   };
 })();
 

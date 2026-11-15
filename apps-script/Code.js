@@ -20,6 +20,7 @@ function onOpen() {
     .addItem('Run weekly agents now', 'menuWeekly')
     .addItem('Export to BigQuery', 'menuBigQuery')
     .addSeparator()
+    .addItem('Test Gemini connection', 'menuTestGemini')
     .addItem('Install fallback triggers', 'installTriggers')
     .addToUi();
 }
@@ -249,7 +250,9 @@ function runSteward(fileName) {
     var input =
       (fileName ? 'Explain the rejected rows from file ' + fileName + '. ' : 'Explain rejected rows that have no explanation yet. ') +
       'Call list_rejected once with only_unexplained true' + (fileName ? ', file "' + fileName + '"' : '') + ' and limit ' + STEWARD_BATCH + '.';
+    console.log('Steward batch ' + (out.batches + 1) + ': ' + pending() + ' row(s) still unexplained');
     var res = runAgent_('steward', input, data, { maxSteps: 2 });
+    console.log('Steward batch done: ok=' + res.ok + ', ' + (res.usage.model_seconds || 0) + ' s in model calls' + (res.error ? ', error: ' + res.error : ''));
     out.usage.model_calls += res.usage.model_calls || 0;
     out.usage.total_tokens += res.usage.total_tokens || 0;
     out.usage.model_seconds += res.usage.model_seconds || 0;
