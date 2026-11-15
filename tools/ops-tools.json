@@ -1,0 +1,100 @@
+[
+  {
+    "name": "get_stock",
+    "description": "Current stock on hand for one SKU: the latest daily snapshot per location (warehouse, store_a, store_b), the total, and the SKU's reorder point.",
+    "read_only": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "sku": { "type": "string", "description": "Product SKU, for example KN-CRE-MON-500." }
+      },
+      "required": ["sku"]
+    }
+  },
+  {
+    "name": "get_sales",
+    "description": "Units sold, revenue, gross margin and average daily units for one SKU over the last N days (ending on the latest data date), split by channel.",
+    "read_only": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "sku": { "type": "string", "description": "Product SKU." },
+        "days": { "type": "integer", "description": "Window length in days, 1 to 90. Default 28.", "minimum": 1, "maximum": 90 }
+      },
+      "required": ["sku"]
+    }
+  },
+  {
+    "name": "get_lead_time",
+    "description": "Supplier lead time in days, reorder point and unit cost for one SKU.",
+    "read_only": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "sku": { "type": "string", "description": "Product SKU." }
+      },
+      "required": ["sku"]
+    }
+  },
+  {
+    "name": "list_low_cover",
+    "description": "SKUs with fewer days of cover than the threshold, or at/below their reorder point, sorted from most urgent. Days of cover = on hand / average daily units. Includes a baseline order quantity computed in code.",
+    "read_only": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "days": { "type": "integer", "description": "Flag SKUs with less than this many days of cover. Default 21.", "minimum": 1, "maximum": 180 },
+        "lookback_days": { "type": "integer", "description": "Days of sales used for the average. Default 28.", "minimum": 7, "maximum": 90 }
+      }
+    }
+  },
+  {
+    "name": "list_dead_stock",
+    "description": "SKUs that have stock on hand but no sales in the lookback window, with the stock value at cost.",
+    "read_only": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "lookback_days": { "type": "integer", "description": "Days without sales to count as dead stock. Default 60.", "minimum": 14, "maximum": 90 }
+      }
+    }
+  },
+  {
+    "name": "list_rejected",
+    "description": "Rows the validator rejected, with file, line, reason code, plain-words reason and the raw row, plus counts per reason.",
+    "read_only": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "limit": { "type": "integer", "description": "Most recent rows to return, 1 to 200. Default 20.", "minimum": 1, "maximum": 200 },
+        "file": { "type": "string", "description": "Only rows from this uploaded file name." }
+      }
+    }
+  },
+  {
+    "name": "get_week_summary",
+    "description": "Numbers for the weekly report: revenue vs last week, units, orders, gross margin, sales by channel, top 5 SKUs, low cover list, dead stock, and data quality counts.",
+    "read_only": true,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "end_date": { "type": "string", "description": "Last day of the week, YYYY-MM-DD. Default: latest data date." }
+      }
+    }
+  },
+  {
+    "name": "save_approval",
+    "description": "Save a reorder suggestion as a Pending row in the Approvals sheet for a human to approve or reject. It never places an order or contacts a supplier.",
+    "read_only": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "sku": { "type": "string", "description": "Product SKU." },
+        "qty": { "type": "integer", "description": "Suggested order quantity in units.", "minimum": 1 },
+        "reason": { "type": "string", "description": "Why, using numbers from the tools." },
+        "confidence": { "type": "number", "description": "0 to 1.", "minimum": 0, "maximum": 1 }
+      },
+      "required": ["sku", "qty", "reason", "confidence"]
+    }
+  }
+]

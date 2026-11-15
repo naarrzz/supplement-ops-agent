@@ -1,0 +1,70 @@
+{
+  "steward": {
+    "type": "object",
+    "properties": {
+      "summary": { "type": "string", "description": "Two or three sentences: how many rows were rejected, the main patterns, and what to do first." },
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "file": { "type": "string" },
+            "line": { "type": "integer" },
+            "reason_code": { "type": "string" },
+            "explanation": { "type": "string", "description": "What is wrong, in plain words." },
+            "likely_cause": { "type": "string" },
+            "suggested_fix": { "type": "string", "description": "Exactly what to change, or delete the row." },
+            "auto_fixable": { "type": "boolean", "description": "True only for pure format fixes with no guessing." }
+          },
+          "required": ["file", "line", "reason_code", "explanation", "suggested_fix", "auto_fixable"]
+        }
+      }
+    },
+    "required": ["summary", "items"]
+  },
+  "analyst": {
+    "type": "object",
+    "properties": {
+      "as_of": { "type": "string", "description": "Latest data date, YYYY-MM-DD." },
+      "suggestions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "sku": { "type": "string" },
+            "qty": { "type": "integer", "minimum": 1 },
+            "reason": { "type": "string", "description": "Why, quoting the tool numbers used." },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "required": ["sku", "qty", "reason", "confidence"]
+        }
+      },
+      "notes": { "type": "string", "description": "Dead stock, trends, anything the owner should know. No reorders here." }
+    },
+    "required": ["as_of", "suggestions", "notes"]
+  },
+  "writer": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" },
+      "headline": { "type": "string", "description": "One sentence: the most important thing this week." },
+      "sections": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "heading": { "type": "string" },
+            "bullets": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["heading", "bullets"]
+        }
+      },
+      "actions": {
+        "type": "array",
+        "description": "At most five next steps.",
+        "items": { "type": "string" }
+      }
+    },
+    "required": ["title", "headline", "sections", "actions"]
+  }
+}
