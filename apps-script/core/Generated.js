@@ -60,7 +60,7 @@ var OPS_TOOL_SCHEMAS = [
   },
   {
     "name": "list_low_cover",
-    "description": "SKUs with fewer days of cover than the threshold, or at/below their reorder point, sorted from most urgent. Days of cover = on hand / average daily units. Includes a baseline order quantity computed in code.",
+    "description": "SKUs with fewer days of cover than the threshold or than their supplier lead time, or at/below their reorder point, sorted from most urgent. Days of cover = on hand / average daily units. Includes a baseline order quantity computed in code.",
     "read_only": true,
     "parameters": {
       "type": "object",

@@ -136,7 +136,8 @@ var OpsTools = (function () {
     var items = [];
     data.products.forEach(function (p) {
       var c = coverRow(data, p, lookback, end);
-      var low = (c.cover !== null && c.cover < days) || c.stock.total <= p.reorder_point;
+      var low =
+        (c.cover !== null && (c.cover < days || c.cover < p.lead_time_days)) || c.stock.total <= p.reorder_point;
       if (!low || c.avg === 0) return; // no recent sales = dead stock question, not a reorder
       var target = c.avg * (p.lead_time_days + days);
       var suggested = Math.max(0, Math.ceil((target - c.stock.total) / 5) * 5);
@@ -261,6 +262,36 @@ var OpsTools = (function () {
     return { saved: true, approval: row, note: 'Saved as Pending. A human approves or rejects it in the Approvals sheet. Nothing is sent to a supplier.' };
   }
 
+  /** One row per SKU for the dashboard tab (not a tool). Status uses the same rules as the tools. */
+  function coverTable(data, args) {
+    var days = parseInt((args && args.days) || 21, 10);
+    var end = asOf(data);
+    var dead = {};
+    list_dead_stock(data, {}).items.forEach(function (i) {
+      dead[i.sku] = true;
+    });
+    return data.products.map(function (p) {
+      var c = coverRow(data, p, 28, end);
+      var status = 'OK';
+      if (dead[p.sku]) status = 'Dead stock';
+      else if (c.cover !== null && c.cover < p.lead_time_days) status = 'Runs out before restock';
+      else if ((c.cover !== null && c.cover < days) || c.stock.total <= p.reorder_point) status = 'Low';
+      return {
+        as_of: end,
+        sku: p.sku,
+        name: p.name,
+        category: p.category,
+        on_hand: c.stock.total,
+        avg_daily_units_28d: round2(c.avg),
+        days_of_cover: c.cover === null ? '' : c.cover,
+        lead_time_days: p.lead_time_days,
+        reorder_point: p.reorder_point,
+        stock_value_at_cost: round2(c.stock.total * p.unit_cost),
+        status: status,
+      };
+    });
+  }
+
   var TOOLS = {
     get_stock: get_stock,
     get_sales: get_sales,
@@ -283,7 +314,7 @@ var OpsTools = (function () {
     }
   }
 
-  return { run: run, names: Object.keys(TOOLS), addDays: addDays, asOf: asOf };
+  return { run: run, names: Object.keys(TOOLS), addDays: addDays, asOf: asOf, coverTable: coverTable };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = OpsTools;

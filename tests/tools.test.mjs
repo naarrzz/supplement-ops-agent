@@ -56,7 +56,7 @@ test('list_low_cover is sorted, math is consistent, and the threshold filters', 
   const r = store.run('list_low_cover', { days: 21 });
   for (let i = 1; i < r.items.length; i++) assert.ok(r.items[i - 1].days_of_cover <= r.items[i].days_of_cover);
   for (const it of r.items) {
-    assert.ok(it.days_of_cover < 21 || it.on_hand <= it.reorder_point);
+    assert.ok(it.days_of_cover < 21 || it.days_of_cover < it.lead_time_days || it.on_hand <= it.reorder_point);
     const expectedCover = Math.round((it.on_hand / it.avg_daily_units) * 10) / 10;
     assert.ok(Math.abs(expectedCover - it.days_of_cover) <= 0.2);
     assert.equal(it.baseline_order_qty % 5, 0);
@@ -100,4 +100,21 @@ test('bad input comes back as an error the agent can read, not a crash', () => {
   assert.match(store.run('get_stock', { sku: 'NOPE' }).error, /Unknown SKU/);
   assert.match(store.run('drop_tables', {}).error, /Unknown tool/);
   assert.match(store.run('save_approval', { sku: TREND_SKU, qty: -1, reason: 'x', confidence: 0.5 }).error, /qty/);
+});
+
+test('coverTable gives one row per SKU with a status the dashboard can color', async () => {
+  const { loadCore } = await import('../lib/load-core.mjs');
+  const { OpsTools } = loadCore();
+  const rows = JSON.parse(JSON.stringify(OpsTools.coverTable(data)));
+  assert.equal(rows.length, 25);
+  const bySku = Object.fromEntries(rows.map((r) => [r.sku, r]));
+  assert.equal(bySku[DEAD_SKU].status, 'Dead stock');
+  assert.equal(bySku[DEAD_SKU].days_of_cover, '');
+  assert.equal(bySku[TREND_SKU].status, 'Runs out before restock');
+  // Every SKU the low-cover tool flags is not OK on the dashboard, and vice versa.
+  const flagged = new Set(store.run('list_low_cover', { days: 21 }).items.map((i) => i.sku));
+  for (const r of rows) {
+    if (r.status === 'Dead stock') continue;
+    assert.equal(flagged.has(r.sku), r.status !== 'OK', r.sku);
+  }
 });

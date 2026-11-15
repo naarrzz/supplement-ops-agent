@@ -23,6 +23,10 @@ var SHEETS = {
     headers: ['approval_id', 'created_at', 'sku', 'name', 'qty', 'est_cost', 'reason', 'confidence', 'requested_by', 'status', 'decided_by', 'decided_at'],
   },
   reports: { name: 'Reports', headers: ['created_at', 'period', 'title', 'doc_url', 'emailed_to'] },
+  cover: {
+    name: 'SKU cover',
+    headers: ['as_of', 'sku', 'name', 'category', 'on_hand', 'avg_daily_units_28d', 'days_of_cover', 'lead_time_days', 'reorder_point', 'stock_value_at_cost', 'status'],
+  },
 };
 
 function props_() {

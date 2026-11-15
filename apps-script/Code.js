@@ -95,6 +95,7 @@ function processFile_(file) {
       return o;
     });
     replaceObjects_('products', products);
+    refreshCover_();
     var plog = { run_id: 'run-' + Date.now(), step: 'validate', file: name, kind: 'products', rows_in: products.length, rows_kept: products.length, rows_fixed: 0, rows_rejected: 0, started_at: new Date().toISOString(), finished_at: new Date().toISOString(), status: 'ok' };
     appendObjects_('runLog', [plog]);
     return { file: name, kind: 'products', log: plog };
@@ -114,10 +115,16 @@ function processFile_(file) {
     if (r.kind === 'inventory') appendObjects_('inventory', r.clean);
     appendObjects_('rejected', r.rejected);
     appendObjects_('runLog', [r.log]);
+    refreshCover_();
     return { file: name, kind: r.kind, log: r.log };
   } finally {
     lock.releaseLock();
   }
+}
+
+/** Rebuilds the "SKU cover" tab that Looker Studio reads (days of cover, status per SKU). */
+function refreshCover_() {
+  return replaceObjects_('cover', OpsTools.coverTable(loadData_()));
 }
 
 // ---------- Agents ----------
