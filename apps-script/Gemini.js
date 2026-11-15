@@ -5,7 +5,7 @@
  *
  * Model choice: GEMINI_MODEL in Script Properties if set. Otherwise the script asks the API which
  * models this key can use (models.list), picks the newest stable "flash" model
- * (OpsAgents.pickModel) and saves it. If that model later returns 404 (retired), it picks again.
+ * (OpsAgents.pickModel) and saves it. If that model is retired or overloaded, it switches (see callGemini_).
  */
 var GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/';
 
@@ -15,8 +15,12 @@ function geminiKey_() {
   return key;
 }
 
-/** Lists models that support generateContent for this key and saves the best flash model. */
+/**
+ * Lists models that support generateContent for this key and saves the best flash model,
+ * skipping any model in `exclude` (ones that just failed).
+ */
 function pickGeminiModel_(exclude) {
+  exclude = [].concat(exclude || []);
   var res = UrlFetchApp.fetch(GEMINI_BASE + 'models?pageSize=200', {
     headers: { 'x-goog-api-key': geminiKey_() },
     muteHttpExceptions: true,
@@ -24,19 +28,19 @@ function pickGeminiModel_(exclude) {
   if (res.getResponseCode() !== 200) {
     throw new Error('Could not list Gemini models (HTTP ' + res.getResponseCode() + '): ' + res.getContentText().slice(0, 300));
   }
-  var names = (JSON.parse(res.getContentText()).models || [])
+  var all = (JSON.parse(res.getContentText()).models || [])
     .filter(function (m) {
       return (m.supportedGenerationMethods || []).indexOf('generateContent') !== -1;
     })
     .map(function (m) {
       return String(m.name).replace(/^models\//, '');
-    })
-    .filter(function (n) {
-      return n !== exclude;
     });
+  var names = all.filter(function (n) {
+    return exclude.indexOf(n) === -1;
+  });
   var pick = OpsAgents.pickModel(names);
-  console.log('Gemini models available: ' + names.length + ', picked: ' + pick);
-  if (!pick) throw new Error('No Gemini model with generateContent is available to this key.');
+  console.log('Gemini models (' + all.length + '): ' + all.join(', ').slice(0, 800) + ' | skipping: ' + (exclude.join(', ') || 'none') + ' | picked: ' + pick);
+  if (!pick) throw new Error('No other Gemini model with generateContent is available to this key.');
   props_().setProperty('GEMINI_MODEL', pick);
   return pick;
 }
@@ -45,11 +49,19 @@ function geminiModel_() {
   return props_().getProperty('GEMINI_MODEL') || pickGeminiModel_();
 }
 
+var GEMINI_MAX_MODELS = 3; // how many different models to try before giving up
+
+/**
+ * One generateContent call. A model that is unavailable (404) or overloaded (500/503/504) is not
+ * retried: the script switches to the next best available model (up to 3) and saves the one that
+ * works. 429 (rate limit) waits once, then also switches, since free-tier quotas are per model.
+ */
 function callGemini_(request) {
   var key = geminiKey_();
   var model = geminiModel_();
-  var repicked = false;
-  for (var attempt = 0; attempt < 5; attempt++) {
+  var tried = [model];
+  var waited429 = false;
+  for (var attempt = 0; attempt < 6; attempt++) {
     var t0 = Date.now();
     console.log('Gemini call: model ' + model + ', attempt ' + (attempt + 1) + ', ' + JSON.stringify(request).length + ' chars');
     var res = UrlFetchApp.fetch(GEMINI_BASE + 'models/' + encodeURIComponent(model) + ':generateContent', {
@@ -62,18 +74,23 @@ function callGemini_(request) {
     var code = res.getResponseCode();
     console.log('Gemini HTTP ' + code + ' in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s');
     if (code === 200) return JSON.parse(res.getContentText());
-    if (code === 404 && !repicked) {
-      model = pickGeminiModel_(model); // model retired or not available to this key: choose again once
-      repicked = true;
+    if (code === 429 && !waited429) {
+      waited429 = true;
+      Utilities.sleep(5000);
       continue;
     }
-    if (code === 429 || code >= 500) {
-      Utilities.sleep(Math.pow(2, attempt) * 2000); // free tier is rate-limited; back off and retry
+    if ([404, 429, 500, 503, 504].indexOf(code) !== -1) {
+      if (tried.length >= GEMINI_MAX_MODELS) {
+        throw new Error('Gemini is unavailable right now (HTTP ' + code + ' from ' + tried.join(', ') + '). This is on Google\'s side; try again later.');
+      }
+      model = pickGeminiModel_(tried);
+      tried.push(model);
+      waited429 = false;
       continue;
     }
     throw new Error('Gemini (' + model + ') HTTP ' + code + ': ' + res.getContentText().slice(0, 500));
   }
-  throw new Error('Gemini (' + model + ') is still busy or rate-limited after 5 tries (free tier). Try again in a minute.');
+  throw new Error('Gemini did not answer after ' + tried.length + ' model(s): ' + tried.join(', ') + '.');
 }
 
 /** Menu: one tiny Gemini call, to check the key, the model and the speed. */

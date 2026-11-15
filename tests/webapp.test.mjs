@@ -132,3 +132,40 @@ test('runSteward works in batches, saves each batch, and stops when nothing is l
   assert.equal(calls, 15); // per batch: tool call, then text, then final JSON
   assert.equal(typeof r.usage.model_seconds, 'number');
 });
+
+test('callGemini_ switches model on 503 instead of retrying the overloaded one, and saves the one that works', () => {
+  const props = { OPS_TOKEN: TOKEN, GEMINI_API_KEY: 'test-key', GEMINI_MODEL: 'gemini-3.8-flash' };
+  const ctx = makeAppsScript(props);
+  const hits = [];
+  const reply = (code, body) => ({ getResponseCode: () => code, getContentText: () => JSON.stringify(body) });
+  ctx.Utilities = { sleep() {} };
+  ctx.UrlFetchApp = {
+    fetch: (url) => {
+      if (url.includes('models?')) {
+        return reply(200, { models: ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.8-flash-lite', 'text-embedding-004']
+          .map((n) => ({ name: 'models/' + n, supportedGenerationMethods: n.startsWith('text') ? ['embedContent'] : ['generateContent'] })) });
+      }
+      const model = url.match(/models\/([^:]+):/)[1];
+      hits.push(model);
+      if (model === 'gemini-3.8-flash') return reply(503, { error: { code: 503 } });
+      return reply(200, { candidates: [{ content: { parts: [{ text: 'OK' }] } }] });
+    },
+  };
+  const res = ctx.callGemini_({ contents: [] });
+  assert.equal(res.candidates[0].content.parts[0].text, 'OK');
+  assert.deepEqual(hits, ['gemini-3.8-flash', 'gemini-3.5-flash']);
+  assert.equal(props.GEMINI_MODEL, 'gemini-3.5-flash');
+
+  // all models down: clear error after 3 models, no endless retry
+  hits.length = 0;
+  props.GEMINI_MODEL = 'gemini-3.8-flash';
+  ctx.UrlFetchApp.fetch = (url) => {
+    if (url.includes('models?')) {
+      return reply(200, { models: ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.0-flash', 'gemini-2.9-flash'].map((n) => ({ name: 'models/' + n, supportedGenerationMethods: ['generateContent'] })) });
+    }
+    hits.push(url.match(/models\/([^:]+):/)[1]);
+    return reply(503, {});
+  };
+  assert.throws(() => ctx.callGemini_({ contents: [] }), /unavailable right now.*Google/);
+  assert.equal(hits.length, 3);
+});
