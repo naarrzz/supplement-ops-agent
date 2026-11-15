@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "supplement-ops": {
+      "command": "node",
+      "args": ["mcp-server/server.ts"],
+      "env": { "OPS_BACKEND": "local" }
+    }
+  }
+}

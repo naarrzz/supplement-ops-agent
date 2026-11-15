@@ -1,0 +1,18 @@
+{
+  "name": "supplement-ops-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ask ops: MCP server for the supplement ops agent. Demo data only, fictional brand.",
+  "type": "module",
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "start": "node server.ts",
+    "test": "node --test \"test/*.test.mjs\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2"
+  },
+  "license": "MIT"
+}
