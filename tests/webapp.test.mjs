@@ -100,3 +100,35 @@ test('processInbox loads the product list first and holds orders until products 
   assert.equal(held.skipped, true);
   assert.match(held.error, /product list/);
 });
+
+test('runSteward works in batches, saves each batch, and stops when nothing is left', () => {
+  const ctx = makeAppsScript({ OPS_TOKEN: TOKEN });
+  const store = buildLocalStore();
+  ctx.loadData_ = () => store.data;
+  const writes = [];
+  ctx.appendObjects_ = () => 0;
+  ctx.sheet_ = () => ({
+    getDataRange: () => ({ getValues: () => [['file', 'line', 'explanation', 'likely_cause', 'suggested_fix', 'auto_fixable'], ...store.data.rejected.map((r) => [r.file, r.line, '', '', '', ''])] }),
+    getRange: () => ({ setValues: (v) => writes.push(v) }),
+  });
+  let calls = 0;
+  ctx.callGemini_ = (req) => {
+    calls++;
+    const results = req.contents.flatMap((c) => c.parts).filter((p) => p.functionResponse);
+    if (req.generationConfig.responseMimeType) {
+      const rows = results.at(-1).functionResponse.response.result.rows;
+      const items = rows.map((r) => ({ file: r.file, line: r.line, reason_code: r.reason_code, explanation: 'x', suggested_fix: 'fix', auto_fixable: false }));
+      return { candidates: [{ content: { parts: [{ text: JSON.stringify({ summary: 'batch', items }) }] } }] };
+    }
+    const part = results.length ? { text: 'ok' } : { functionCall: { name: 'list_rejected', args: { only_unexplained: true, limit: 15 } } };
+    return { candidates: [{ content: { parts: [part] } }] };
+  };
+  const r = JSON.parse(JSON.stringify(ctx.runSteward()));
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.equal(r.explained, 65);
+  assert.equal(r.remaining, 0);
+  assert.equal(r.batches, 5); // 15+15+15+15+5
+  assert.equal(writes.length, 65);
+  assert.equal(calls, 15); // per batch: tool call, then text, then final JSON
+  assert.equal(typeof r.usage.model_seconds, 'number');
+});

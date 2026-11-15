@@ -169,12 +169,13 @@ function refreshCover_() {
 
 // ---------- Agents ----------
 
-function runAgent_(agent, input, data) {
+function runAgent_(agent, input, data, opts) {
   data = data || loadData_();
+  opts = opts || {};
   var started = new Date().toISOString();
   var res;
   try {
-    res = OpsAgents.runAgent({ agent: agent, input: input, data: data, callModel: callGemini_ });
+    res = OpsAgents.runAgent({ agent: agent, input: input, data: data, callModel: callGemini_, maxSteps: opts.maxSteps });
   } catch (e) {
     res = { ok: false, agent: agent, error: String(e && e.message ? e.message : e), trace: [], usage: { total_tokens: 0 } };
   }
@@ -187,11 +188,13 @@ function runAgent_(agent, input, data) {
       status: res.ok ? 'ok' : 'error',
       tokens: res.usage ? res.usage.total_tokens : '',
       detail: JSON.stringify({
+        model: props_().getProperty('GEMINI_MODEL'),
         input: String(input).slice(0, 300),
         tools: (res.trace || []).map(function (t) {
           return t.tool + ' ' + JSON.stringify(t.args);
         }),
         model_calls: res.usage ? res.usage.model_calls : 0,
+        model_seconds: res.usage ? res.usage.model_seconds : '',
         problems: res.problems,
         error: res.error,
         output: JSON.stringify(res.output || res.raw || '').slice(0, 2000),
@@ -201,27 +204,69 @@ function runAgent_(agent, input, data) {
   return res;
 }
 
-/** Steward: explains rejected rows and writes the explanation next to each row. */
-function runSteward(fileName) {
-  var input = typeof fileName === 'string' && fileName
-    ? 'Explain the rejected rows from file ' + fileName + '. Call list_rejected with file set to that name and only_unexplained true.'
-    : 'Explain every rejected row that has no explanation yet. Call list_rejected with only_unexplained true and limit 100.';
-  var res = runAgent_('steward', input);
-  if (!res.ok) return res;
+var STEWARD_BATCH = 15;
+var STEWARD_TIME_BUDGET_MS = 4.5 * 60 * 1000; // Apps Script stops a run at 6 minutes
+
+/** Writes steward explanations next to their rejected rows. Returns how many rows were updated. */
+function writeStewardItems_(items, data) {
   var sh = sheet_('rejected');
   var values = sh.getDataRange().getValues();
   var h = values[0];
   var col = function (name) {
     return h.indexOf(name);
   };
-  res.output.items.forEach(function (it) {
+  var updated = 0;
+  items.forEach(function (it) {
     for (var i = 1; i < values.length; i++) {
       if (values[i][col('file')] === it.file && Number(values[i][col('line')]) === Number(it.line)) {
         sh.getRange(i + 1, col('explanation') + 1, 1, 4).setValues([[it.explanation, it.likely_cause || '', it.suggested_fix, it.auto_fixable]]);
+        updated++;
       }
     }
+    // keep the in-memory copy in step, so the next batch's only_unexplained skips these rows
+    data.rejected.forEach(function (r) {
+      if (r.file === it.file && Number(r.line) === Number(it.line)) r.suggested_fix = it.suggested_fix;
+    });
   });
-  return res;
+  return updated;
+}
+
+/**
+ * Steward: explains rejected rows in batches of 15 and writes each batch to the sheet right away.
+ * Stops before the Apps Script time limit; running it again continues with the rows left.
+ */
+function runSteward(fileName) {
+  fileName = typeof fileName === 'string' ? fileName : '';
+  var deadline = Date.now() + STEWARD_TIME_BUDGET_MS;
+  var data = loadData_();
+  var pending = function () {
+    return data.rejected.filter(function (r) {
+      return (!fileName || r.file === fileName) && !r.suggested_fix;
+    }).length;
+  };
+  var out = { ok: true, explained: 0, batches: 0, summaries: [], usage: { model_calls: 0, total_tokens: 0, model_seconds: 0 } };
+  while (pending() && Date.now() < deadline - 75000) {
+    var input =
+      (fileName ? 'Explain the rejected rows from file ' + fileName + '. ' : 'Explain rejected rows that have no explanation yet. ') +
+      'Call list_rejected once with only_unexplained true' + (fileName ? ', file "' + fileName + '"' : '') + ' and limit ' + STEWARD_BATCH + '.';
+    var res = runAgent_('steward', input, data, { maxSteps: 2 });
+    out.usage.model_calls += res.usage.model_calls || 0;
+    out.usage.total_tokens += res.usage.total_tokens || 0;
+    out.usage.model_seconds += res.usage.model_seconds || 0;
+    if (!res.ok) {
+      out.ok = false;
+      out.error = res.error;
+      out.problems = res.problems;
+      break;
+    }
+    var n = writeStewardItems_(res.output.items, data);
+    out.explained += n;
+    out.batches++;
+    out.summaries.push(res.output.summary);
+    if (!n) break; // model answered about rows we could not match; don't loop on it
+  }
+  out.remaining = pending();
+  return out;
 }
 
 function runAnalyst() {
@@ -313,10 +358,12 @@ function failText_(res) {
 function menuSteward() {
   var res = runSteward();
   var fail = failText_(res);
-  alert_('Data steward (demo data)', fail
-    ? 'Failed: ' + fail + '\n\nDetails are in the Run log tab.'
-    : 'Explained ' + res.output.items.length + ' rejected row(s). See the explanation columns in Rejected rows.\n\n' + res.output.summary +
-      '\n\nModel calls: ' + res.usage.model_calls + ', tokens: ' + res.usage.total_tokens);
+  var progress = 'Explained ' + res.explained + ' row(s) in ' + res.batches + ' batch(es); ' + res.remaining + ' left' +
+    (res.remaining ? ' (run it again to continue).' : '.');
+  alert_('Data steward (demo data)', (fail ? 'Stopped: ' + fail + '\n\n' : '') + progress +
+    (res.summaries.length ? '\n\n' + res.summaries[0] : '') +
+    '\n\nModel calls: ' + res.usage.model_calls + ', tokens: ' + res.usage.total_tokens + ', model time: ' + Math.round(res.usage.model_seconds) + ' s' +
+    '\nDetails are in the Run log tab.');
 }
 
 function menuWeekly() {

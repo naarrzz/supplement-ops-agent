@@ -144,11 +144,19 @@ var OpsAgents = (function () {
     var system = { parts: [{ text: prompts[cfg.prompt] }] };
     var contents = [{ role: 'user', parts: [{ text: o.input }] }];
     var trace = [];
-    var usage = { model_calls: 0, prompt_tokens: 0, output_tokens: 0, total_tokens: 0 };
+    var usage = { model_calls: 0, prompt_tokens: 0, output_tokens: 0, total_tokens: 0, model_seconds: 0 };
+    var callModel = function (req) {
+      var t0 = Date.now();
+      try {
+        return o.callModel(req);
+      } finally {
+        usage.model_seconds = Math.round((usage.model_seconds + (Date.now() - t0) / 1000) * 10) / 10;
+      }
+    };
     var steps = 0;
 
     for (var step = 0; step < maxSteps; step++) {
-      var res = o.callModel({
+      var res = callModel({
         systemInstruction: system,
         contents: contents,
         tools: [{ functionDeclarations: decls }],
@@ -179,7 +187,7 @@ var OpsAgents = (function () {
       role: 'user',
       parts: [{ text: 'Give your final answer now as JSON matching the response schema. Use only numbers that came from tool results or this conversation.' }],
     });
-    var finalRes = o.callModel({
+    var finalRes = callModel({
       systemInstruction: system,
       contents: contents,
       generationConfig: {
