@@ -129,7 +129,7 @@ test('runSteward works in batches, saves each batch, and stops when nothing is l
   assert.equal(r.remaining, 0);
   assert.equal(r.batches, 5); // 15+15+15+15+5
   assert.equal(writes.length, 65);
-  assert.equal(calls, 15); // per batch: tool call, then text, then final JSON
+  assert.equal(calls, 10); // per batch: one tool call, then the final JSON
   assert.equal(typeof r.usage.model_seconds, 'number');
 });
 

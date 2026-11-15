@@ -246,12 +246,14 @@ function runSteward(fileName) {
     }).length;
   };
   var out = { ok: true, explained: 0, batches: 0, summaries: [], usage: { model_calls: 0, total_tokens: 0, model_seconds: 0 } };
-  while (pending() && Date.now() < deadline - 75000) {
+  var lastBatchMs = 120000; // assume a slow first batch; then use the measured time
+  while (pending() && Date.now() + lastBatchMs * 1.3 < deadline) {
+    var batchStart = Date.now();
     var input =
       (fileName ? 'Explain the rejected rows from file ' + fileName + '. ' : 'Explain rejected rows that have no explanation yet. ') +
       'Call list_rejected once with only_unexplained true' + (fileName ? ', file "' + fileName + '"' : '') + ' and limit ' + STEWARD_BATCH + '.';
     console.log('Steward batch ' + (out.batches + 1) + ': ' + pending() + ' row(s) still unexplained');
-    var res = runAgent_('steward', input, data, { maxSteps: 2 });
+    var res = runAgent_('steward', input, data, { maxSteps: 1 }); // one list_rejected call, then the JSON answer
     console.log('Steward batch done: ok=' + res.ok + ', ' + (res.usage.model_seconds || 0) + ' s in model calls' + (res.error ? ', error: ' + res.error : ''));
     out.usage.model_calls += res.usage.model_calls || 0;
     out.usage.total_tokens += res.usage.total_tokens || 0;
@@ -267,6 +269,7 @@ function runSteward(fileName) {
     out.batches++;
     out.summaries.push(res.output.summary);
     if (!n) break; // model answered about rows we could not match; don't loop on it
+    lastBatchMs = Date.now() - batchStart;
   }
   out.remaining = pending();
   return out;
