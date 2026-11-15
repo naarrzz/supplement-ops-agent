@@ -11,6 +11,9 @@ export const DAYS = 90;
 export const BATCH_DAYS = 7;
 export const DEAD_SKU = 'KN-EL-SACH-OLD';
 export const TREND_SKU = 'KN-CRE-MON-500';
+// Supplier delay story: these SKUs miss every warehouse restock from day 60 on.
+export const DELAYED_SKUS = ['KN-EL-LMN-20', 'KN-VIT-OMG-60', 'KN-PRE-BLZ-30'];
+const DELAY_FROM = 60;
 export const LOCATIONS = ['warehouse', 'store_a', 'store_b'];
 export const ERROR_TYPES = [
   'duplicate_order_id',
@@ -156,8 +159,10 @@ export function generateDemo({ seed = 20261115 } = {}) {
         let v = onHand.get(key) - (soldUnits.get(`${d}|${loc}|${p.sku}`) || 0);
         if (p.sku !== DEAD_SKU) {
           const upd = p._popularity * 2;
-          if (loc === 'warehouse' && d % 28 === i % 28) v += Math.round(upd * 28) + 5;
-          if (loc !== 'warehouse' && d % 14 === i % 14) v += Math.round(upd * 0.2 * 14) + 2;
+          const delayed = DELAYED_SKUS.includes(p.sku) && d >= DELAY_FROM;
+          if (loc === 'warehouse' && !delayed && d % 28 === i % 28) v += Math.round(upd * 28) + 5;
+          // stores get topped up to a par level (about two weeks of store sales) every 14 days
+          if (loc !== 'warehouse' && d % 14 === i % 14) v = Math.max(v, Math.round(upd * 0.2 * 14) + 2);
         }
         v = Math.max(0, v);
         onHand.set(key, v);
