@@ -194,3 +194,14 @@ test('deadline: a slow model skips the extra tool round and still returns a chec
   assert.equal(r2.stopped_for_time, false);
   assert.equal(r2.usage.model_calls, 4);
 });
+
+test('benchmark candidates: text flash models incl. lite, newest first, current model first', () => {
+  const names = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.6-flash-lite', 'gemini-3.8-flash-lite', 'gemini-3.8-pro',
+    'gemini-3.8-flash-tts', 'gemini-3.6-flash-image', 'text-embedding-005', 'gemini-2.5-flash'];
+  const c = plain(OpsAgents.benchmarkCandidates(names, 'gemini-3.6-flash', 6));
+  assert.equal(c[0], 'gemini-3.6-flash');
+  assert.ok(c.includes('gemini-3.8-flash-lite') && c.includes('gemini-3.6-flash-lite'));
+  assert.ok(!c.some((n) => /tts|image|pro|embedding/.test(n)));
+  assert.deepEqual(c.slice(1, 3), ['gemini-3.8-flash', 'gemini-3.8-flash-lite']);
+  assert.equal(OpsAgents.benchmarkCandidates(names, null, 2).length, 2);
+});

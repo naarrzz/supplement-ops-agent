@@ -21,6 +21,7 @@ function onOpen() {
     .addItem('Export to BigQuery', 'menuBigQuery')
     .addSeparator()
     .addItem('Test Gemini connection', 'menuTestGemini')
+    .addItem('Benchmark Gemini models (pick fastest)', 'menuBenchmarkGemini')
     .addItem('Install fallback triggers', 'installTriggers')
     .addToUi();
 }

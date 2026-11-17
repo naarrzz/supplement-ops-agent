@@ -334,6 +334,34 @@ var OpsAgents = (function () {
     });
   }
 
+  /**
+   * Models worth timing in the benchmark: text "flash" models, lite included (often much faster when
+   * the main flash model is overloaded), no tts/image/audio/live/embedding. Newest version first,
+   * the current model always included, at most `max` (default 6).
+   */
+  function benchmarkCandidates(names, current, max) {
+    max = max || 6;
+    var odd = /(tts|image|audio|live|embed|vision|thinking-exp|robotics)/i;
+    var version = function (n) {
+      var m = /^gemini-(\d+(?:\.\d+)?)/.exec(n);
+      return m ? parseFloat(m[1]) : 0;
+    };
+    var list = names
+      .filter(function (n) {
+        return /^gemini-.*flash/.test(n) && !odd.test(n);
+      })
+      .sort(function (a, b) {
+        return version(b) - version(a) || a.length - b.length || (a < b ? -1 : 1);
+      });
+    if (current) {
+      list = list.filter(function (n) {
+        return n !== current;
+      });
+      list.unshift(current);
+    }
+    return list.slice(0, max);
+  }
+
   /** Writer JSON -> plain text, used for the email body and the Google Doc. */
   function renderReport(r) {
     var lines = [r.title, '', r.headline, ''];
@@ -362,6 +390,7 @@ var OpsAgents = (function () {
     checkSuggestions: checkSuggestions,
     saveSuggestions: saveSuggestions,
     analystPrefetch: analystPrefetch,
+    benchmarkCandidates: benchmarkCandidates,
     renderReport: renderReport,
     pickModel: pickModel,
     textOf: textOf,

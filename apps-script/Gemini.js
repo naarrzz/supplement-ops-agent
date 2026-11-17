@@ -93,6 +93,67 @@ function callGemini_(request) {
   throw new Error('Gemini did not answer after ' + tried.length + ' model(s): ' + tried.join(', ') + '.');
 }
 
+var GEMINI_BENCH_BUDGET_MS = 5 * 60 * 1000; // menu runs also stop at 6 minutes
+
+/**
+ * Menu: times one tiny call on each candidate flash model (lite included) and saves the fastest
+ * one that answered as GEMINI_MODEL. Use it when agent runs hit the 6-minute limit.
+ */
+function menuBenchmarkGemini() {
+  var start = Date.now();
+  var key = geminiKey_();
+  var res = UrlFetchApp.fetch(GEMINI_BASE + 'models?pageSize=200', { headers: { 'x-goog-api-key': key }, muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) {
+    alert_('Gemini benchmark', 'Could not list models (HTTP ' + res.getResponseCode() + ').');
+    return;
+  }
+  var names = (JSON.parse(res.getContentText()).models || [])
+    .filter(function (m) {
+      return (m.supportedGenerationMethods || []).indexOf('generateContent') !== -1;
+    })
+    .map(function (m) {
+      return String(m.name).replace(/^models\//, '');
+    });
+  var current = props_().getProperty('GEMINI_MODEL');
+  var candidates = OpsAgents.benchmarkCandidates(names, current, 6);
+  var rows = [];
+  var slowest = 30000;
+  candidates.forEach(function (model) {
+    if (Date.now() + slowest > start + GEMINI_BENCH_BUDGET_MS) {
+      rows.push({ model: model, note: 'skipped (time)' });
+      return;
+    }
+    var t0 = Date.now();
+    var r = UrlFetchApp.fetch(GEMINI_BASE + 'models/' + encodeURIComponent(model) + ':generateContent', {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { 'x-goog-api-key': key },
+      payload: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Reply with the single word OK.' }] }] }),
+      muteHttpExceptions: true,
+    });
+    var ms = Date.now() - t0;
+    if (ms > slowest) slowest = ms;
+    rows.push({ model: model, code: r.getResponseCode(), seconds: Math.round(ms / 100) / 10 });
+    console.log('Benchmark ' + model + ': HTTP ' + r.getResponseCode() + ' in ' + (ms / 1000).toFixed(1) + ' s');
+  });
+  var ok = rows
+    .filter(function (r) {
+      return r.code === 200;
+    })
+    .sort(function (a, b) {
+      return a.seconds - b.seconds;
+    });
+  if (ok.length) props_().setProperty('GEMINI_MODEL', ok[0].model);
+  alert_(
+    'Gemini benchmark',
+    rows
+      .map(function (r) {
+        return r.model + (r.note ? ': ' + r.note : ': HTTP ' + r.code + ', ' + r.seconds + ' s') + (r.model === current ? ' (was current)' : '');
+      })
+      .join('\n') + '\n\n' + (ok.length ? 'Saved GEMINI_MODEL = ' + ok[0].model : 'No model answered; GEMINI_MODEL unchanged.'),
+  );
+}
+
 /** Menu: one tiny Gemini call, to check the key, the model and the speed. */
 function menuTestGemini() {
   var t0 = Date.now();

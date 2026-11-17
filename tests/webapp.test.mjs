@@ -35,7 +35,7 @@ const post = (ctx, body, query = {}) =>
 
 test('all Apps Script files parse and define the entry points', () => {
   const ctx = makeAppsScript({ OPS_TOKEN: TOKEN });
-  for (const fn of ['doGet', 'doPost', 'onOpen', 'setup', 'processInbox', 'runSteward', 'runWeekly', 'installTriggers', 'onEdit', 'callGemini_', 'exportToBigQuery', 'menuSteward', 'menuWeekly', 'menuBigQuery', 'pickGeminiModel_', 'menuTestGemini']) {
+  for (const fn of ['doGet', 'doPost', 'onOpen', 'setup', 'processInbox', 'runSteward', 'runWeekly', 'installTriggers', 'onEdit', 'callGemini_', 'exportToBigQuery', 'menuSteward', 'menuWeekly', 'menuBigQuery', 'pickGeminiModel_', 'menuTestGemini', 'menuBenchmarkGemini']) {
     assert.equal(typeof ctx[fn], 'function', fn);
   }
 });
