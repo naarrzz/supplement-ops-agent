@@ -43,9 +43,10 @@ Sandbox limit: tables expire after 60 days. Running the export again reloads eve
 1. **(you)** Deploy → New deployment → Web app. Execute as: Me. Who has access: Anyone. (The token protects it; nobody can read data without it.)
 2. Copy the Web App URL. Test:
    ```bash
-   curl -sL -X POST "$URL" -H 'Content-Type: text/plain' \
+   curl -sL "$URL" -H 'Content-Type: text/plain' \
      -d "{\"token\":\"$OPS_TOKEN\",\"action\":\"tool\",\"name\":\"list_low_cover\",\"args\":{\"days\":21}}"
    ```
+   Don't add `-X POST`: Apps Script answers with a 302 to googleusercontent.com, and a forced POST on that redirect returns an HTML error page. With `-d` alone curl POSTs first and follows the redirect with a GET, which is what Apps Script expects.
 3. Optional: point the MCP server at it by filling `mcp-server/.env` from `.env.example`.
 
 ## 4. n8n (self-hosted on the Mac)
@@ -53,7 +54,7 @@ Sandbox limit: tables expire after 60 days. Running the export again reloads eve
 n8n needs a supported Node version (check docs.n8n.io for the current range; Node 26 may be too new). The install is large (roughly 1 GB), so check free disk space first.
 
 1. Start n8n and open http://localhost:5678, create the local owner account **(you)**.
-2. Workflows → Import from file: both files in `n8n/`.
+2. Workflows → Import from file: both files in `n8n/`. (The CLI `n8n import:workflow` in n8n 2.x rejects files without an `id` field; import a copy with an `id` added, or use the editor.)
 3. **(you)** Credentials:
    - Google Drive OAuth2 for the trigger (needs a Google Cloud OAuth client; n8n's docs walk through it).
    - "Query Auth" named **Ops Web App token**: Name `token`, Value = your `OPS_TOKEN`. Select it on every HTTP Request node.
