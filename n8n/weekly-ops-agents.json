@@ -25,7 +25,7 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ action: 'run_agent', agent: 'analyst' }) }}",
-        "options": { "timeout": 300000 }
+        "options": { "timeout": 360000 }
       }
     },
     {
@@ -64,7 +64,7 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ action: 'save_suggestions', checked: $json.checked }) }}",
-        "options": { "timeout": 300000 }
+        "options": { "timeout": 360000 }
       }
     },
     {
@@ -81,7 +81,7 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ action: 'write_report', analyst_output: $('Inventory analyst agent (Gemini)').item.json.output, saved: $json.results }) }}",
-        "options": { "timeout": 300000 }
+        "options": { "timeout": 360000 }
       }
     },
     {

@@ -126,6 +126,11 @@ var OpsAgents = (function () {
    *   data        data object for OpsTools
    *   callModel   function(request) -> Gemini generateContent response (synchronous)
    *   maxSteps    tool-calling rounds before forcing the final answer (default 6)
+   *   prefetched  optional [{tool, args, result}] that code already ran; sent with the first message
+   *               so the model can skip those calls (see analystPrefetch)
+   *   deadline    optional epoch ms. Before another tool round, the loop checks that this round plus
+   *               the final answer still fit (estimated from the slowest model call so far); if not,
+   *               it goes straight to the final answer. Apps Script stops a run at 6 minutes.
    */
   function runAgent(o) {
     var cfg = AGENTS[o.agent];
@@ -142,20 +147,43 @@ var OpsAgents = (function () {
         return { name: t.name, description: t.description, parameters: toGeminiSchema(t.parameters) };
       });
     var system = { parts: [{ text: prompts[cfg.prompt] }] };
-    var contents = [{ role: 'user', parts: [{ text: o.input }] }];
     var trace = [];
+    var firstText = o.input;
+    if (o.prefetched && o.prefetched.length) {
+      firstText +=
+        '\n\nTool results already fetched by code (same tools you have; do not call these again):\n' +
+        o.prefetched
+          .map(function (p) {
+            return p.tool + ' ' + JSON.stringify(p.args) + ' -> ' + JSON.stringify(p.result);
+          })
+          .join('\n');
+      o.prefetched.forEach(function (p) {
+        trace.push({ step: 0, tool: p.tool, args: p.args, ok: !p.result.error, prefetched: true, result_preview: preview(p.result) });
+      });
+    }
+    var contents = [{ role: 'user', parts: [{ text: firstText }] }];
     var usage = { model_calls: 0, prompt_tokens: 0, output_tokens: 0, total_tokens: 0, model_seconds: 0 };
+    var now = o.now || Date.now; // injectable clock for tests
+    var slowestCallMs = 0;
     var callModel = function (req) {
-      var t0 = Date.now();
+      var t0 = now();
       try {
         return o.callModel(req);
       } finally {
-        usage.model_seconds = Math.round((usage.model_seconds + (Date.now() - t0) / 1000) * 10) / 10;
+        var ms = now() - t0;
+        if (ms > slowestCallMs) slowestCallMs = ms;
+        usage.model_seconds = Math.round((usage.model_seconds + ms / 1000) * 10) / 10;
       }
     };
     var steps = 0;
+    var stoppedForTime = false;
 
     for (var step = 0; step < maxSteps; step++) {
+      // a tool round and the final answer each take about one model call
+      if (o.deadline && step > 0 && now() + 2 * slowestCallMs > o.deadline) {
+        stoppedForTime = true;
+        break;
+      }
       var res = callModel({
         systemInstruction: system,
         contents: contents,
@@ -205,7 +233,7 @@ var OpsAgents = (function () {
       return { ok: false, agent: o.agent, error: 'Model did not return valid JSON', raw: text, trace: trace, usage: usage, steps: steps };
     }
     var problems = check(output, outputs[cfg.output]);
-    var result = { ok: problems.length === 0, agent: o.agent, output: output, problems: problems, trace: trace, usage: usage, steps: steps };
+    var result = { ok: problems.length === 0, agent: o.agent, output: output, problems: problems, trace: trace, usage: usage, steps: steps, stopped_for_time: stoppedForTime };
     if (o.agent === 'analyst' && result.ok) result.checked = checkSuggestions(output, o.data);
     return result;
   }
@@ -285,6 +313,27 @@ var OpsAgents = (function () {
     return anyGemini.length ? newest(anyGemini) : null;
   }
 
+  /**
+   * The calls the analyst prompt always makes, run by code up front: list_low_cover, list_dead_stock,
+   * and get_sales for 7 and 28 days per flagged SKU. Each Gemini round can take 25-110 s, so this turns
+   * up to 7 model calls into 2 and keeps the run under the Apps Script 6-minute limit.
+   */
+  function analystPrefetch(data, days) {
+    days = days || 21;
+    var calls = [
+      { tool: 'list_low_cover', args: { days: days } },
+      { tool: 'list_dead_stock', args: {} },
+    ];
+    var low = OpsTools.run('list_low_cover', { days: days }, data);
+    (low.items || []).forEach(function (i) {
+      calls.push({ tool: 'get_sales', args: { sku: i.sku, days: 7 } });
+      calls.push({ tool: 'get_sales', args: { sku: i.sku, days: 28 } });
+    });
+    return calls.map(function (c) {
+      return { tool: c.tool, args: c.args, result: jsonCopy(OpsTools.run(c.tool, c.args, data)) };
+    });
+  }
+
   /** Writer JSON -> plain text, used for the email body and the Google Doc. */
   function renderReport(r) {
     var lines = [r.title, '', r.headline, ''];
@@ -312,6 +361,7 @@ var OpsAgents = (function () {
     runAgent: runAgent,
     checkSuggestions: checkSuggestions,
     saveSuggestions: saveSuggestions,
+    analystPrefetch: analystPrefetch,
     renderReport: renderReport,
     pickModel: pickModel,
     textOf: textOf,

@@ -147,3 +147,50 @@ test('pickModel prefers the newest stable flash model and skips preview/lite var
   assert.equal(pick(['gemini-flash-latest', 'gemini-2.5-pro']), 'gemini-flash-latest');
   assert.equal(pick([]), null);
 });
+
+test('analyst prefetch: code runs the standard calls, the model answers in 2 calls', () => {
+  const store = buildLocalStore({ now: NOW });
+  const pre = plain(OpsAgents.analystPrefetch(store.data, 21));
+  const low = pre.find((p) => p.tool === 'list_low_cover').result;
+  assert.ok(low.items.length > 0);
+  assert.ok(pre.some((p) => p.tool === 'list_dead_stock'));
+  // get_sales 7 and 28 days for every flagged SKU
+  assert.equal(pre.filter((p) => p.tool === 'get_sales').length, low.items.length * 2);
+
+  const m = fakeModel((req) => {
+    if (isFinal(req)) {
+      const first = low.items[0];
+      return [{ text: JSON.stringify({ as_of: low.as_of, suggestions: [{ sku: first.sku, qty: first.baseline_order_qty, reason: 'low cover', confidence: 0.8 }], notes: 'demo' }) }];
+    }
+    return [{ text: 'I have what I need.' }];
+  });
+  const r = plain(OpsAgents.runAgent({ agent: 'analyst', input: 'Weekly reorder check', data: store.data, callModel: m.call, maxSteps: 2, prefetched: pre }));
+  assert.equal(r.ok, true, JSON.stringify(r.problems));
+  assert.equal(r.usage.model_calls, 2);
+  // the prefetched results reach the model and show in the trace
+  assert.match(m.requests[0].contents[0].parts[0].text, /Tool results already fetched by code/);
+  assert.match(m.requests[0].contents[0].parts[0].text, /list_low_cover/);
+  assert.ok(r.trace.filter((t) => t.prefetched).length === pre.length);
+  assert.deepEqual(r.checked[0].flags, []);
+});
+
+test('deadline: a slow model skips the extra tool round and still returns a checked answer', () => {
+  const store = buildLocalStore({ now: NOW });
+  let clock = 0;
+  const m = fakeModel((req) => {
+    clock += 100000; // every model call takes 100 s
+    if (isFinal(req)) return [{ text: JSON.stringify({ as_of: '2026-11-14', suggestions: [], notes: 'nothing' }) }];
+    return [{ functionCall: { name: 'get_stock', args: { sku: 'KN-CRE-MON-500' } } }];
+  });
+  // 250 s budget: after round 1 (100 s) another round + final (200 s) would end at 300 s, so stop
+  const r = plain(OpsAgents.runAgent({ agent: 'analyst', input: 'x', data: store.data, callModel: m.call, maxSteps: 3, deadline: 250000, now: () => clock }));
+  assert.equal(r.ok, true);
+  assert.equal(r.stopped_for_time, true);
+  assert.equal(r.usage.model_calls, 2);
+
+  // with time to spare the same script uses its rounds
+  clock = 0;
+  const r2 = plain(OpsAgents.runAgent({ agent: 'analyst', input: 'x', data: store.data, callModel: m.call, maxSteps: 3, deadline: 10000000, now: () => clock }));
+  assert.equal(r2.stopped_for_time, false);
+  assert.equal(r2.usage.model_calls, 4);
+});

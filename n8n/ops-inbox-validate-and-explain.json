@@ -29,7 +29,7 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ action: 'process_file', file_id: $json.id }) }}",
-        "options": { "timeout": 300000 }
+        "options": { "timeout": 360000 }
       }
     },
     {
@@ -68,7 +68,7 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ action: 'run_agent', agent: 'steward', file_name: $json.file }) }}",
-        "options": { "timeout": 300000 }
+        "options": { "timeout": 360000 }
       }
     },
     {

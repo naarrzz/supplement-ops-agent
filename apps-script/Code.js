@@ -176,7 +176,15 @@ function runAgent_(agent, input, data, opts) {
   var started = new Date().toISOString();
   var res;
   try {
-    res = OpsAgents.runAgent({ agent: agent, input: input, data: data, callModel: callGemini_, maxSteps: opts.maxSteps });
+    res = OpsAgents.runAgent({
+      agent: agent,
+      input: input,
+      data: data,
+      callModel: callGemini_,
+      maxSteps: opts.maxSteps,
+      prefetched: opts.prefetched,
+      deadline: opts.deadline,
+    });
   } catch (e) {
     res = { ok: false, agent: agent, error: String(e && e.message ? e.message : e), trace: [], usage: { total_tokens: 0 } };
   }
@@ -195,6 +203,7 @@ function runAgent_(agent, input, data, opts) {
           return t.tool + ' ' + JSON.stringify(t.args);
         }),
         model_calls: res.usage ? res.usage.model_calls : 0,
+        stopped_for_time: res.stopped_for_time || undefined,
         model_seconds: res.usage ? res.usage.model_seconds : '',
         problems: res.problems,
         error: res.error,
@@ -275,8 +284,20 @@ function runSteward(fileName) {
   return out;
 }
 
+var ANALYST_TIME_BUDGET_MS = 4.5 * 60 * 1000; // leaves time for loading data and writing the run log
+
+/**
+ * Analyst: code fetches the standard numbers first (OpsAgents.analystPrefetch), so the model needs
+ * one round plus the final JSON. One extra tool round is allowed only if it still fits the time budget.
+ */
 function runAnalyst() {
-  return runAgent_('analyst', 'Weekly reorder check. Use a 21-day threshold.');
+  var deadline = Date.now() + ANALYST_TIME_BUDGET_MS;
+  var data = loadData_();
+  return runAgent_('analyst', 'Weekly reorder check. Use a 21-day threshold.', data, {
+    maxSteps: 2,
+    prefetched: OpsAgents.analystPrefetch(data, 21),
+    deadline: deadline,
+  });
 }
 
 /** Code (not the model) saves Pending approvals after the guardrail check. */
